@@ -1,16 +1,17 @@
 /*
-Enthält die Funktionalität Genentische Sequenzen in Binären Code zu übersetzten. 
+contains functions to convert DNA-Sequences to binary.
 */
 
+//a string representing a Byte
 struct StringByte{
-    //ein String, der ein Byte darstellen soll 
     byte: String,
 }
 impl StringByte {
+    
+    /// creates a StringByte from a string
+    /// error if the string has more then 8 characters or contains characters that are not 1 or 0
     #[allow(dead_code)]
     fn from_string(content: String) -> Result<StringByte, String> {
-        //Gibt ein String_byte Objekt zurück, außer der gegebene String
-        //ist länger als 8 oder enthält etwas anderes als 1 oder 0
         if content.len() > 8 {
             return Err("string contains to many characters".to_string())
         }
@@ -30,12 +31,11 @@ impl StringByte {
         self.byte.push(ch);
     }
 
-    fn to_u8(self) -> u8 {
-        //returns itself as a Byte stored in a Vec<u8>
-        //consumes itself
+    //returns the represented byte as a u8
+    fn to_u8(&self) -> u8 {
         let mut val = 0; //contains the value of self.byte as a decimal number
         for (i, char) in self.byte.chars().into_iter().rev().enumerate() {
-            if char == '0' { //überspringe 0 Bits
+            if char == '0' { //skip 0 bits
                 continue;
             }
             let base: u8 = 2;
@@ -45,15 +45,14 @@ impl StringByte {
     }
 }
 
-///Übersetzt eine Gen-Sequenz in Binär:
+/// string stellt eine Gensequenz dar
+/// converts a DNA-Sequenc to binary:
 ///    A -> 00
 ///    T -> 01
 ///    C -> 10
 ///    G -> 11
-///Gegenstück zu der easy_encode Methode
-///
-///Gibt ein Result-Type zurück
-/// string stellt eine Gensequenz dar
+/// 
+/// returns an error if the given string contains other characters then 0 and 1
 pub fn easy_decode(string: &str) -> Result<Vec<u8>, String> {
     fn match_char(stringbyte: &mut StringByte, nucleotide: char) -> Result<(), String>{
         match nucleotide {
@@ -73,9 +72,7 @@ pub fn easy_decode(string: &str) -> Result<Vec<u8>, String> {
                 stringbyte.push('1');
                 stringbyte.push('1');
             }
-            _ => {
-                return Err("Fehlerhaftes Symbol gefunden".to_string())
-            }
+            _ => return Err(format!("invalid symbol found while decoding: {}", nucleotide))
         }
         Ok(())
     }
@@ -83,10 +80,10 @@ pub fn easy_decode(string: &str) -> Result<Vec<u8>, String> {
     let mut output: Vec<u8> = Vec::new();
 
     let mut iterator = string.chars();
-    let mut condition = true; //false wenn das Ende der Gen-Sequenz erreicht wird
+    let mut condition = true; //check if the end of the sequence is reached
     while condition {
-        let chars = [iterator.next(), iterator.next(), iterator.next(), iterator.next()]; //speichert 4 Nukleotide
-        let mut byte = StringByte::new(); //Speichert den aktuellen Byte
+        let chars = [iterator.next(), iterator.next(), iterator.next(), iterator.next()]; //stores 4 nucleotides
+        let mut byte = StringByte::new(); //contains the current byte
 
         for char in chars {
             match char {

@@ -1,5 +1,7 @@
 /*
 Enthält eine builder Funktion für den Button, mit dem die Konvertierung gestartet wird
+
+contains a builder function for the button that starts the conversion
 */
 
 use std::fmt::Display;
@@ -16,21 +18,21 @@ use crate::ERROR;
 pub fn start_button_builder() -> impl Widget<AppState> {
     let button = Button::new("Convert")
         .on_click(|ctx: &mut EventCtx, data: &mut AppState, env: &Env| {
-            if let AlgorithmType::None = data.algorithm_type{ //Fehlermeldung wenn kein Algorithmus ausgewählt ist
-                open_error(ctx, data, env, "Wähle einen Algorithmus aus!");
+            if let AlgorithmType::None = data.algorithm_type{ //error message if no algorithm is selected
+                open_error(ctx, data, env, "Choose an algorithm!");
                 return;
             }
-            if let None = data.decode_algorithm { //Fehlermeldung wenn kein Algorithmus ausgewählt ist
+            if let None = data.decode_algorithm { //error message if no algorithm is selected
                 if let None = data.encode_algorithm {
-                    open_error(ctx, data, env, "Wähle einen Algorithmus aus!");
+                    open_error(ctx, data, env, "Choose an algorithm!");
                     return;
                 }
             }
 
-            //Konvertieren der Datei
+            //conversion of the file
             data.calculating = true;
             open_loading(ctx, data, env);
-            let mut error_msg = None; //Speichert eventuelle Fehlernachrichten
+            let mut error_msg = None; // stores error messages
             match data.algorithm_type {
                 AlgorithmType::Encode => match encode_file(
                 Path::new(&data.file_path),
@@ -46,7 +48,7 @@ pub fn start_button_builder() -> impl Widget<AppState> {
                     Ok(_) => (),
                     Err(e) => error_msg = Some(e),
                 },
-                AlgorithmType::None => error_msg = Some("Wähle einen Algorithmus aus!".to_string()),
+                AlgorithmType::None => error_msg = Some("Choose an algorithm!".to_string()),
             }
             if let Some(_) = error_msg {
                 ctx.submit_command(ERROR);
@@ -57,28 +59,33 @@ pub fn start_button_builder() -> impl Widget<AppState> {
     button
 }
 
+///encodes a file at the given path with the given algorithm and saves it in the given path
+/// 
+/// returns an error if:
+///     - metadata of the file couldn't been read
+///     - the path is not a file
+///     - the save_path already exists
+///     - save_path couldn't be converted to a string
+///     - an error occurred while encoding
+///     - the name of the given file is invalid
+///     - an error occurred while writing to a file
 fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode) -> Result<(), String>{
-    /*
-    Erhält alle notwendigen Informationen, um eine gegeben Datei
-    zu einer DNA-Sequenz zu übersetzen und diese zu speichern.
-    */
-    //überprüfen ob die gegebenen Pfade zulässig sind
-    if match file_path.metadata() { //Pfad ist keine Datei
+    if match file_path.metadata() { //path is no file
         Ok(n) => !n.is_file(),
         Err(e) => return Err(e.to_string()),
     } {
-        return Err("Gegebene Datei ist keine Datei".to_string())
+        return Err("path does not lead to a file".to_string()) 
     } 
-    if save_path.exists() { //Pfad existiert schon
-        return Err("Pfad, in welchem gespeichert werden soll, existiert schon".to_string())
+    if save_path.exists() { //path already exists
+        return Err("path to save already exists".to_string()) 
     }
 
-    let file_path_str = match file_path.as_os_str().to_str() { //file_path zu &str konvertieren
+    let file_path_str = match file_path.as_os_str().to_str() { //convert file_path to &str
         Some(n) => n,
-        None => return Err("file_path Fehlerhaft, versuche es erneut".to_string()),
+        None => return Err("path is faulty try again".to_string()), 
     };
 
-    let dna_result = match algorithm { //Enthält die DNA-Sequenz
+    let dna_result = match algorithm { //contains a DNA-Sequence
         Encode::EasyEncode => easy_encode(file_path_str),
     };
     let dna = match &dna_result {
@@ -95,74 +102,76 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
     };
     let file = convert_to_fasta(&dna, &Some(&[&dna.len().to_string(), &file_name.to_string()]));
     match std::fs::write(save_path, file) {
-        Err(_) => return Err("Fehler beim Schreiben der Datei".to_string()),
+        Err(_) => return Err("errror while writing to file".to_string()),
         _ => (),
     };
 
-    println!("Erfolgreich Datei konvertiert und gespeichert!");
+    println!("successfully converted and saved file!"); 
     Ok(())
 }
 
+///decodes a file at the given path with the given algorithm and saves it in the given path
+/// 
+/// returns an error if:
+///     - path does not lead to a file
+///     - path to save already exists
+///     - given file is not a fasta file
+///     - error while reading file
+///     - error while writing file
 fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Decode) -> Result<(), String> {
-    /*
-    Erhält alle notwendigen Informationen, um eine gegebene DNA-Sequenz zu einer
-    binären Datei zu konvertieren und diese zu speichern.
-    */
-    //überprüfen ob die gegebenen Pfade zulässig sind
-    if match file_path.metadata() { //Pfad ist keine Datei
+    if match file_path.metadata() { //path is not a file
         Ok(n) => !n.is_file(),
         Err(e) => return Err(e.to_string()),
     } {
-        return Err("Gegebene Datei ist keine Datei".to_string())
+        return Err("path does not lead to a file".to_string())
     } 
-    if save_path.exists() { //Pfad existiert schon
-        return Err("Pfad, in welchem gespeichert werden soll, existiert schon".to_string())
+    if save_path.exists() { //path already exists
+        return Err("path to save to already exists".to_string())
     }
 
-    //Header und Zeilenumbrüche entfernen
+    //remove header and new lines
     let sequenc = match fs::read_to_string(file_path) {
         Ok(n) => {
-            let index = match n.find("\n") { //Ende der ersten Zeile
+            let index = match n.find("\n") { //end of first line
                 Some(n) => n,
                 None => return Err("Datei Fehlerhaft: Sie entspricht nicth dem FASTA-Format".to_string()),
             };
             n[index+1..].replace("\n", "")
         },
-        Err(_) => return Err("Es ist ein Fehler beim Lesen der Datei aufgetreten.\nVersuche es erneut.".to_string()),
+        Err(_) => return Err("error while reading file. Please try again.".to_string()), 
     };
 
     let binary = match algorithm {
         Decode::EasyDecode => easy_decode(&sequenc),
     };
-    let binary = match binary { //Enthält die Binäre Sequenz der Datei
+    let binary = match binary { //contains the binary version of the sequence
         Ok(n) => n,
         Err(e) => return Err(e),
     };
 
     if let Err(_) = std::fs::write(save_path, binary) {
-        return Err("Fehler beim Schreiben der Datei".to_string())
+        return Err("error while writing to file".to_string())
     }
 
-    println!("Erfolgreich Datei konvertiert und gespeichert!");
+    println!("successfully converted and saved file!");
     Ok(())
 }
 
 
-///Erhlält eine DNA-Sequenz als String und konvertiert sie zu einem String,
-///welcher dem FASTA-Format entspricht
-/// content: DNA Sequenz
-/// options: optionale Informationen, die in die Headliner getragen werden, getrennt von einem |
+/// gets a DNA-Sequence and converts it to the fasta format
+///
+/// content: DNA-Sequence
+/// options: optional informationen for the header
 fn convert_to_fasta<T: Display>(content: &str, options: &Option<&[T]>) -> String {
-    //Headline erstellen
+    //create header
     let mut headline = ">".to_string();
-    if let Some(n) = options { //Headline erweitern wenn nötig
+    if let Some(n) = options { //expand header if necessary
         for option in *n {
             headline += format!("{}|", option).as_str();
         }
     }
 
-
-    //Teilt die Gensequenz in Zeilen auf, die jeweils bis zu 80 Nukleotide enthalten
+    //splits the sequence in lines, each containing 80 characters
     let elements_per_line = 80;
     let mut output = headline + "\n";
     for (index, char) in content.char_indices() {

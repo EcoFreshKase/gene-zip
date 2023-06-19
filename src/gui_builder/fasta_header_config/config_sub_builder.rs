@@ -1,6 +1,5 @@
 /*
-Enthält eine Builder-Funktion, die ein root-widget für das Sub-Window zur Fasta-Header
-personalisierung enthält.
+contains a builder function for the root widget of the FASTA-Header-Configurator sub window
 */
 
 use druid::Widget;

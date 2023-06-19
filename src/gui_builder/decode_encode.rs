@@ -1,33 +1,35 @@
 /*
-Enthält eine Builder Funktion für die Auswahl für Decoding und Encoding
-von Dateien und die Auswahl für den genauene Encoding/Decoding Algorithmus
+contains a builder function for the selection wether to decode or encode the file 
+as well as the specific algorithm selection
 */
 
 use std::fmt::Display;
 
-use druid::{Widget, Data, WidgetExt, UnitPoint};
-use druid::widget::{RadioGroup, Flex, Label, LensWrap, Either, DisabledIf, Container, SizedBox};
+use druid::{Widget, Data, WidgetExt};
+use druid::widget::{RadioGroup, Flex, Label, LensWrap, Either, DisabledIf};
 
 use super::AppState::AppState;
-use super::{BORDER_COLOR, BORDER_WIDTH};
 
+/// represents an the kind of an algorithm
 #[allow(dead_code)]
 #[derive(Data, Clone, PartialEq, Debug, Copy)]
-pub enum AlgorithmType { //Ob ein Decode oder Encode Algorithmus genutzt werden soll
+pub enum AlgorithmType {
     Decode,
     Encode,
-    None, //kein ausgewählter Algorithmus
+    None, //no algorithm
 }
 
+/// represents a specific Decode Algorithm
 #[allow(dead_code)]
 #[derive(Data, Clone, PartialEq, Debug)]
-pub enum Decode { //stellt einen Decode-Algorithmus dar
+pub enum Decode {
     EasyDecode
 }
 
+/// represents a specific Encode Algorithm
 #[allow(dead_code)]
 #[derive(Data, Clone, PartialEq, Debug)]
-pub enum Encode { //stellt einen Encode-Algorithmus dar
+pub enum Encode {
     EasyEncode
 }
 
@@ -66,13 +68,13 @@ pub fn builder() -> impl Widget<AppState> {
         AppState::algorithm_type
         );
 
-    let algorithm_choose = Either::new( //Auswahl des Algorithmuses
+    let algorithm_choose = Either::new( //selection of the algorithm
         |data: &AppState, _env| {
             match &data.algorithm_type {
                 AlgorithmType::Decode => true,
                 AlgorithmType::Encode => false,
-                AlgorithmType::None => { //Nur bei fatalem Fehler //fail-safe
-                    println!("Bei Erstellung des Algorithmen-Auswahl-Widgets ist data.algorithm Algorithm::None");
+                AlgorithmType::None => {//fail-safe
+                    println!("\"data.algorithm == Algorithm::None\" while creating algorithm_choose widget");
                     true
                 },
             }
@@ -80,7 +82,7 @@ pub fn builder() -> impl Widget<AppState> {
         decode_builder(),
         encode_builder(),
     );
-    let algorithm_choose_control: DisabledIf<AppState, Either<AppState>> = DisabledIf::new( //Auswahl des Algorthmuses nur möglich wenn Encode/Decode gewählt wurde
+    let algorithm_choose_control: DisabledIf<AppState, Either<AppState>> = DisabledIf::new( //algorithm selection only possible if an algorithm type was selected
         algorithm_choose,
         |data: &AppState, _env| {
             match data.algorithm_type {
@@ -99,7 +101,6 @@ fn decode_builder() -> impl Widget<AppState> {
     let decode_label = Label::new("Decoder:");
 
     let options = vec![
-        //("easy decode", Algorithm::Decode(Decode::EasyDecode)),
         ("easy decode", Some(Decode::EasyDecode)),
     ];
 

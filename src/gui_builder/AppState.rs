@@ -5,16 +5,17 @@ use druid::{Data, Lens};
 use super::error_correcting::ErrorCorrecting;
 use super::decode_encode::{AlgorithmType, Decode, Encode};
 
+/// current state of the application
 #[derive(Clone, Data, Lens, Debug)]
 pub struct AppState {
     pub file_path: String, //path to the file that gets converted
     pub save_path: String, //path to the place where the converted file gets saved
-    pub error_correcting: ErrorCorrecting, //Speichert den Fehler-Korrektur Algorithmus
+    pub error_correcting: ErrorCorrecting, //stores the selectes error_correcting algorithm
     pub algorithm_type: AlgorithmType,
-    pub decode_algorithm: Option<Decode>, //Speichert den decode Algorithmus, wenn einer ausgewählt ist
-    pub encode_algorithm: Option<Encode>, //Speichert den decode Algorithmus, wenn einer ausgewählt ist
-    pub calculating: bool, //Ob eine Konvertierung gerade stattfindet
-} //current state of the program
+    pub decode_algorithm: Option<Decode>, //storers the selected decode algorithm
+    pub encode_algorithm: Option<Encode>, //storers the selected encode algorithm
+    pub calculating: bool, //whether a conversion is in progress
+}
 
 impl Display for AppState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

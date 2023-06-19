@@ -1,14 +1,14 @@
 /*
-Enthält eine Funktion, um ein Fenster zu öffnen, welches dem Benutzter
-Informationen über die Konvertierung gibt.
+contains a function to open a window that lets the user see the current state of the conversion
 */
 
-use druid::{WindowId, EventCtx, Env, WindowConfig, UnitPoint, WidgetExt, Widget, Event, Command};
-use druid::widget::{ Label, LineBreaking, Controller, ControllerHost};
+use druid::{WindowId, EventCtx, Env, WindowConfig, UnitPoint, WidgetExt, Widget, Event};
+use druid::widget::{ Label, LineBreaking, Controller};
 use super::AppState::AppState;
 use crate::ERROR;
 
-struct LoadingController; //leeres Controller Struct um Sub-Window bei Fehler zu schließen
+//controlls when to close the sub window
+struct LoadingController;
 
 impl<W: Widget<AppState>> Controller<AppState,W> for LoadingController {
     fn event(&mut self, child: &mut W, ctx: &mut EventCtx, event: &druid::Event, data: &mut AppState, env: &Env) {
@@ -37,7 +37,7 @@ pub fn open_loading(ctx: &mut EventCtx, data: &AppState, env: &Env) -> WindowId 
     
     let size = (300.0, 200.);
     
-    ctx.new_sub_window( //Fenster öffnen
+    ctx.new_sub_window( //open sub window
         WindowConfig::default()
             .resizable(false)
             .window_size(size),

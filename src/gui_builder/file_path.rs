@@ -1,11 +1,10 @@
 /*
-Enthält eine Builder-Funktion für den Teil des UI,
-der den Pfad der Datei und die Auswahl für den Speicherpfad enthält
+contains a builder function for a widget that lets the user see the path of the current file
+and the path to which the file gets saved
 */
 
 use druid::{Widget,Insets, UnitPoint, Env};
 use druid::widget::{Label, WidgetExt, TextBox, Padding, Flex};
-use crate::gui_builder::{BORDER_COLOR, BORDER_WIDTH};
 
 use crate::gui_builder::AppState::AppState;
 
@@ -15,9 +14,9 @@ pub fn file_path_builder() -> impl Widget<AppState> {
     let file_path_label = Label::new(|data: &AppState, _env: &Env| { //create file_path_label
         format!("{}", data.file_path)
     }).align_left();
-    let file_name_text_box = TextBox::new() //Text Feld um den Namen der Konvertierten Datei anzugeben
+    let file_name_text_box = TextBox::new() //field to input the name of the file to save
         .lens(AppState::save_path);
-    let file_path_container = Padding::new(Insets { //enthält aktuellen Pfad und Eingabefeld mit einem Pedding nach links und rechts
+    let file_path_container = Padding::new(Insets { //padding widget
         x0: 10.0,
         y0: 0.0,
         x1: 0.0,

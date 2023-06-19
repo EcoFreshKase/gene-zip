@@ -2,42 +2,41 @@
 
 use std::env;
 use std::path::Path;
-use druid::{WindowDesc, AppLauncher, Selector, Command};
+use druid::{WindowDesc, AppLauncher, Selector};
 
 mod convert_utils;
 mod gui_builder;
 
 use gui_builder::decode_encode;
 
-const WINDOW_SIZE: (f64, f64) = (599.0 *1.3, 337.0 *1.3); //Größe des Fensters (Breite, Höhe)
+const WINDOW_SIZE: (f64, f64) = (599.0 *1.3, 337.0 *1.3); //Size of the window (width, height)
 const ERROR: Selector = Selector::new("ERROR WHILE CONVERTING");
 
 fn main() {
 
     //let args: Vec<String> = env::args().collect();
     let args: Vec<String> = vec![String::from("C:\\Users\\alexa\\OneDrive\\Dokumente\\Schule\\5. PK\\g-zip\\dummy_file.txt")];
-    //let args: Vec<String> = vec![String::from("D:\\Bilder\\Insta\\convert.7z")];
     let path = args.get(0).unwrap();
 
-    //default Werte für den Startzustand der Anwendung
+    //default values for the start of the application
     let default_save_extension= ".fasta";
-    let default_save_path = { //Standard Pfad für die Speicherung der konvertierten Datei
-        let extension_index = { //Start des Datei Typs
-            let mut tmp = None; //speichert den Rückgabe Wert
+    let default_save_path = {
+        let extension_index = {
+            let mut output = None;
             for (index, char) in path.chars().rev().enumerate() { //iterate through the path from behind
                 if char == '.' {
-                    tmp = Some(path.len() - index - 1);
+                    output = Some(path.len() - index - 1);
                     break;
                 } else if char == '\\' {
-                    tmp = Some(path.len());
+                    output = Some(path.len());
                     break;
                 }
             }
-            tmp.expect(&format!("Path is not valid: {}", path))
+            output.expect(&format!("Path is not valid: {}", path))
         };
         path[..extension_index].to_owned() + default_save_extension
     };
-    let default_algorithm_type = { //Standardmäßig ausgewählter Algorithmus-Typ
+    let default_algorithm_type = {
         let path = Path::new(path);
         let mut output = decode_encode::AlgorithmType::Encode;
 
@@ -49,7 +48,7 @@ fn main() {
         output
     };
 
-    //GUI Erstellung
+    //GUI creation
     let main_window = WindowDesc::new(gui_builder::build_ui())
         .title("g-zip")
         .resizable(false)
