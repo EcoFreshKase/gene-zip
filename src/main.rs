@@ -5,7 +5,6 @@ use std::path::Path;
 use druid::{WindowDesc, AppLauncher, Selector, Command};
 
 mod convert_utils;
-mod utils;
 mod gui_builder;
 
 use gui_builder::decode_encode;
