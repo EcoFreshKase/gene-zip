@@ -1,3 +1,8 @@
+/*
+Hamming Code Implementation from tckmn
+Github-repo: https://github.com/tckmn/rustyham
+*/
+
 use std::iter::repeat;
 
 pub enum Hamming { Encode, Decode, EncodeBinary, DecodeBinary }

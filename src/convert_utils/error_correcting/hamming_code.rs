@@ -1,5 +1,5 @@
 /*
-
+contains all functions to encode and decode bytes with the (7,4) hamming code
 */
 use super::rustyham;
 
