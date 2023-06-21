@@ -15,7 +15,7 @@ const ERROR: Selector = Selector::new("ERROR WHILE CONVERTING");
 fn main() {
 
     //let args: Vec<String> = env::args().collect();
-    let args: Vec<String> = vec![String::from("placeholder")];
+    let args: Vec<String> = vec![String::from("C:\\Users\\alexa\\Desktop\\Coding Projekte\\g-zip\\dummy_file.txt")];
     let path = args.get(0).unwrap();
 
     //default values for the start of the application

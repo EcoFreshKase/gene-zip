@@ -53,10 +53,10 @@ mod test {
     use crate::convert_utils::error_correcting::rustyham::{hamming, Hamming};
     use super::{hamming_decode, hamming_encode};
 
-    //flipt den n-ten Bit eine Bytes
+    //flips the n-th bit of a byte
     fn flip_n_bit(bit: &mut u8, n: usize) -> u8 {
         let output: u8;
-        if (*bit >> n) & 1 == 1 { //Überprüfen ob Bit 1 ist
+        if (*bit >> n) & 1 == 1 { //checks if bit is 1
             let rev_bit = !*bit;
             output = !(rev_bit | (1 << n));
         } else {
