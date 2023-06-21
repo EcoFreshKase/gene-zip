@@ -6,13 +6,15 @@ contains a builder function for the button that starts the conversion
 
 use std::fmt::Display;
 use std::path::Path;
-use std::fs;
+use std::fs::{self, read};
 use druid::{Widget, EventCtx, Env};
 use druid::widget::{Button};
 use super::AppState::AppState;
+use super::error_correcting::ErrorCorrecting;
 use super::{AlgorithmType, Decode, Encode};
 use super::{open_error, loading_window::open_loading};
 use crate::convert_utils::{easy_encode, easy_decode};
+use crate::convert_utils::error_correcting::hamming_code::{hamming_decode, hamming_encode};
 use crate::ERROR;
 
 pub fn start_button_builder() -> impl Widget<AppState> {
@@ -37,14 +39,16 @@ pub fn start_button_builder() -> impl Widget<AppState> {
                 AlgorithmType::Encode => match encode_file(
                 Path::new(&data.file_path),
                 Path::new(&data.save_path), 
-                data.encode_algorithm.clone().unwrap()) {
+                data.encode_algorithm.clone().unwrap(),
+                &data.error_correcting) {
                     Ok(_) => (),
                     Err(e) => error_msg = Some(e),
                 },
                 AlgorithmType::Decode => match decode_file(
                 Path::new(&data.file_path),
                 Path::new(&data.save_path), 
-                data.decode_algorithm.clone().unwrap()) {
+                data.decode_algorithm.clone().unwrap(),
+                &data.error_correcting) {
                     Ok(_) => (),
                     Err(e) => error_msg = Some(e),
                 },
@@ -69,7 +73,7 @@ pub fn start_button_builder() -> impl Widget<AppState> {
 ///     - an error occurred while encoding
 ///     - the name of the given file is invalid
 ///     - an error occurred while writing to a file
-fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode) -> Result<(), String>{
+fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode, error_correcting_algorithm: &ErrorCorrecting) -> Result<(), String>{
     if match file_path.metadata() { //path is no file
         Ok(n) => !n.is_file(),
         Err(e) => return Err(e.to_string()),
@@ -80,13 +84,20 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         return Err("path to save already exists".to_string()) 
     }
 
-    let file_path_str = match file_path.as_os_str().to_str() { //convert file_path to &str
-        Some(n) => n,
-        None => return Err("path is faulty try again".to_string()), 
+    let bytes = match read(file_path) { //read bytes from file
+        Ok(n) => n,
+        Err(e) => return Err(format!("error while reading from file; {}", e).to_string())
     };
 
+    //implement error correcting
+    let bytes = match encode_error_correcting(bytes, error_correcting_algorithm) {
+        Ok(n) => n,
+        Err(e) => return Err(e),
+    };
+
+    //encode binary
     let dna_result = match algorithm { //contains a DNA-Sequence
-        Encode::EasyEncode => easy_encode(file_path_str),
+        Encode::EasyEncode => easy_encode(bytes),
     };
     let dna = match &dna_result {
         Ok(_) => dna_result.unwrap(),
@@ -118,7 +129,7 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
 ///     - given file is not a fasta file
 ///     - error while reading file
 ///     - error while writing file
-fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Decode) -> Result<(), String> {
+fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Decode, error_correcting_algorithm: &ErrorCorrecting) -> Result<(), String> {
     if match file_path.metadata() { //path is not a file
         Ok(n) => !n.is_file(),
         Err(e) => return Err(e.to_string()),
@@ -134,7 +145,7 @@ fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         Ok(n) => {
             let index = match n.find("\n") { //end of first line
                 Some(n) => n,
-                None => return Err("Datei Fehlerhaft: Sie entspricht nicth dem FASTA-Format".to_string()),
+                None => return Err("File fault: it does not follow the fasta format ".to_string()),
             };
             n[index+1..].replace("\n", "")
         },
@@ -145,7 +156,12 @@ fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         Decode::EasyDecode => easy_decode(&sequenc),
     };
     let binary = match binary { //contains the binary version of the sequence
-        Ok(n) => n,
+        Ok(n) => {
+            match decode_error_correcting(n, error_correcting_algorithm) {//reverse the error correcting
+                Ok(n) => n,
+                Err(e) => return Err(e),
+            }
+        },
         Err(e) => return Err(e),
     };
 
@@ -181,4 +197,29 @@ fn convert_to_fasta<T: Display>(content: &str, options: &Option<&[T]>) -> String
         }
     }
     output
+}
+
+/// gets byte and implements the given error correcting algorithm for the bytes and retusn them
+/// 
+/// returns an error if the given error correction algorithm returns an error
+fn encode_error_correcting(byte: Vec<u8>, algorithm: &ErrorCorrecting) -> Result<Vec<u8>, String> {
+    let output = match algorithm {
+        ErrorCorrecting::None => return Ok(byte),
+        ErrorCorrecting::Hamming => hamming_encode(&byte),
+    };
+    match output {
+        Ok(n) => Ok(n),
+        Err(e) => Err(format!("error while implementing error correcting code: {}", e).to_string()),
+    }
+}
+
+fn decode_error_correcting(byte: Vec<u8>, algorithm: &ErrorCorrecting) -> Result<Vec<u8>, String> {
+    let output = match algorithm {
+        ErrorCorrecting::None => return Ok(byte),
+        ErrorCorrecting::Hamming => hamming_decode(&byte),
+    };
+    match output {
+        Ok(n) => Ok(n),
+        Err(e) => Err(format!("error while reversing error correcting code: {}", e).to_string()),
+    }
 }
