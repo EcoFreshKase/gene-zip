@@ -1,4 +1,3 @@
 A programm to convert binary files to DNA sequences, encode them with error correcting codes, customize the FASTA-Header and decode DNA sequences back to binary data.
 
-This program was initially made as a school project. Therefore some comments maybe even most are in german. This will be changed over time.
-Error Correcting and FASTA-Header customization are not yet implemented.
+FASTA-Header customization is not yet implemented.
