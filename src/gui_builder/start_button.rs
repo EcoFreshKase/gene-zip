@@ -64,7 +64,6 @@ pub fn start_button_builder() -> impl Widget<AppState> {
             }
             if let Some(_) = error_msg {
                 ctx.submit_command(ERROR);
-                println!("submited ERROR command");
                 open_error(ctx, data, env, error_msg.unwrap());
             }
             data.calculating = false;
