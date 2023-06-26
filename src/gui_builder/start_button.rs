@@ -20,12 +20,20 @@ use crate::ERROR;
 pub fn start_button_builder() -> impl Widget<AppState> {
     let button = Button::new("Convert")
         .on_click(|ctx: &mut EventCtx, data: &mut AppState, env: &Env| {
-            if let AlgorithmType::None = data.algorithm_type{ //error message if no algorithm is selected
-                open_error(ctx, data, env, "Choose an algorithm!");
-                return;
-            }
-            if let None = data.decode_algorithm { //error message if no algorithm is selected
-                if let None = data.encode_algorithm {
+            match data.algorithm_type { //error message if no algorithm is selected
+                AlgorithmType::Decode => {
+                    if let None = data.decode_algorithm {
+                        open_error(ctx, data, env, "Choose an algorithm!");
+                        return;
+                    }
+                }
+                AlgorithmType::Encode => {
+                    if let None = data.encode_algorithm {
+                        open_error(ctx, data, env, "Choose an algorithm!");
+                        return;
+                    }
+                }
+                AlgorithmType::None => {
                     open_error(ctx, data, env, "Choose an algorithm!");
                     return;
                 }
@@ -56,6 +64,7 @@ pub fn start_button_builder() -> impl Widget<AppState> {
             }
             if let Some(_) = error_msg {
                 ctx.submit_command(ERROR);
+                println!("submited ERROR command");
                 open_error(ctx, data, env, error_msg.unwrap());
             }
             data.calculating = false;
