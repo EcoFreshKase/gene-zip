@@ -15,7 +15,6 @@ use super::{AlgorithmType, Decode, Encode};
 use super::{open_error, loading_window::open_loading};
 use crate::convert_utils::{easy_encode, easy_decode};
 use crate::convert_utils::error_correcting::hamming_code::{hamming_decode, hamming_encode};
-use crate::{ERROR, NEW_LOADING_WINDOW, WINDOW_CREATED};
 
 
 pub fn start_button_builder() -> impl Widget<AppState> {
