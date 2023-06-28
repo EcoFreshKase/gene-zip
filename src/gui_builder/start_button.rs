@@ -7,15 +7,16 @@ contains a builder function for the button that starts the conversion
 use std::fmt::Display;
 use std::path::Path;
 use std::fs::{self, read};
-use druid::{Widget, EventCtx, Env};
-use druid::widget::{Button};
+use druid::{Widget, EventCtx, Env, Event, WidgetExt, TimerToken};
+use druid::widget::{Button, Controller};
 use super::AppState::AppState;
 use super::error_correcting::ErrorCorrecting;
 use super::{AlgorithmType, Decode, Encode};
 use super::{open_error, loading_window::open_loading};
 use crate::convert_utils::{easy_encode, easy_decode};
 use crate::convert_utils::error_correcting::hamming_code::{hamming_decode, hamming_encode};
-use crate::ERROR;
+use crate::{ERROR, NEW_LOADING_WINDOW, WINDOW_CREATED};
+
 
 pub fn start_button_builder() -> impl Widget<AppState> {
     let button = Button::new("Convert")
@@ -41,8 +42,8 @@ pub fn start_button_builder() -> impl Widget<AppState> {
 
             //conversion of the file
             data.calculating = true;
+            data.error_msg.clear(); //clear any prior error messages
             open_loading(ctx, data, env);
-            let mut error_msg = None; // stores error messages
             match data.algorithm_type {
                 AlgorithmType::Encode => match encode_file(
                 Path::new(&data.file_path),
@@ -50,7 +51,7 @@ pub fn start_button_builder() -> impl Widget<AppState> {
                 data.encode_algorithm.clone().unwrap(),
                 &data.error_correcting) {
                     Ok(_) => (),
-                    Err(e) => error_msg = Some(e),
+                    Err(e) => data.error_msg = e,
                 },
                 AlgorithmType::Decode => match decode_file(
                 Path::new(&data.file_path),
@@ -58,22 +59,18 @@ pub fn start_button_builder() -> impl Widget<AppState> {
                 data.decode_algorithm.clone().unwrap(),
                 &data.error_correcting) {
                     Ok(_) => (),
-                    Err(e) => error_msg = Some(e),
+                    Err(e) => data.error_msg = e,
                 },
-                AlgorithmType::None => error_msg = Some("Choose an algorithm!".to_string()),
-            }
-            if let Some(_) = error_msg {
-                ctx.submit_command(ERROR);
-                println!("submited ERROR command");
-                open_error(ctx, data, env, error_msg.unwrap());
+                AlgorithmType::None => data.error_msg = "Choose an algorithm!".to_string(),
             }
             data.calculating = false;
+            println!("successfully converted and saved file!");
         });
     button
 }
 
 ///encodes a file at the given path with the given algorithm and saves it in the given path
-/// 
+///
 /// returns an error if:
 ///     - metadata of the file couldn't been read
 ///     - the path is not a file
@@ -90,7 +87,7 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         return Err("path does not lead to a file".to_string()) 
     } 
     if save_path.exists() { //path already exists
-        return Err("path to save already exists".to_string()) 
+        return Err("save path already exists".to_string()) 
     }
 
     let bytes = match read(file_path) { //read bytes from file
@@ -126,7 +123,6 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         _ => (),
     };
 
-    println!("successfully converted and saved file!"); 
     Ok(())
 }
 
@@ -178,7 +174,6 @@ fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         return Err("error while writing to file".to_string())
     }
 
-    println!("successfully converted and saved file!");
     Ok(())
 }
 

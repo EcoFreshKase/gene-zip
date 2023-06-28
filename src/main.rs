@@ -11,6 +11,8 @@ use gui_builder::decode_encode;
 
 const WINDOW_SIZE: (f64, f64) = (599.0 *1.3, 337.0 *1.3); //Size of the window (width, height)
 const ERROR: Selector = Selector::new("ERROR WHILE CONVERTING");
+const NEW_LOADING_WINDOW: Selector = Selector::new("CREATE A NEW LOADING WINDOW");
+const WINDOW_CREATED: Selector = Selector::new("NEW WINDOW CREATED");
 
 fn main() {
 
@@ -61,6 +63,7 @@ fn main() {
         decode_algorithm: None,
         encode_algorithm: None,
         calculating: false,
+        error_msg: "".to_string(),
     };
 
     AppLauncher::with_window(main_window)

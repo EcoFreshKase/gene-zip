@@ -15,6 +15,7 @@ pub struct AppState {
     pub decode_algorithm: Option<Decode>, //storers the selected decode algorithm
     pub encode_algorithm: Option<Encode>, //storers the selected encode algorithm
     pub calculating: bool, //whether a conversion is in progress
+    pub error_msg: String //stores error messages
 }
 
 impl Display for AppState {
@@ -26,7 +27,8 @@ impl Display for AppState {
             Algorithm_Type: {}\n
             Decode_Algorithm: {:?}\n
             Encode_Algorithm: {:?}\n
-            Calculating: {}\n",
+            Calculating: {}\n
+            Error_msg: {}\n",
             self.file_path,
             self.save_path,
             self.error_correcting,
@@ -34,6 +36,7 @@ impl Display for AppState {
             self.decode_algorithm,
             self.encode_algorithm,
             self.calculating,
+            self.error_msg
         )
     }
 }
