@@ -60,7 +60,15 @@ pub fn start_button_builder() -> impl Widget<AppState> {
                     Ok(_) => (),
                     Err(e) => data.error_msg = e,
                 },
+<<<<<<< HEAD
                 AlgorithmType::None => data.error_msg = "Choose an algorithm!".to_string(),
+=======
+                AlgorithmType::None => error_msg = Some("Choose an algorithm!".to_string()),
+            }
+            if let Some(_) = error_msg {
+                ctx.submit_command(ERROR);
+                open_error(ctx, data, env, error_msg.unwrap());
+>>>>>>> bb0551c2946d7697e2087fe86d50e255c9bab3eb
             }
             data.calculating = false;
             println!("successfully converted and saved file!");
