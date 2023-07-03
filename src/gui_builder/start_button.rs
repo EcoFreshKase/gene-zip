@@ -7,72 +7,151 @@ contains a builder function for the button that starts the conversion
 use std::fmt::Display;
 use std::path::Path;
 use std::fs::{self, read};
-use druid::{Widget, EventCtx, Env, Event, WidgetExt, TimerToken};
+use std::thread;
+use std::sync::mpsc::{self, TryRecvError};
+use std::time::Duration;
+use druid::{Widget, EventCtx, Env, Event, WidgetExt, TimerToken, Target};
 use druid::widget::{Button, Controller};
 use super::AppState::AppState;
 use super::error_correcting::ErrorCorrecting;
 use super::{AlgorithmType, Decode, Encode};
 use super::{open_error, loading_window::open_loading};
+use crate::{START_CONVERSION, GLOBAL_UPDATE};
 use crate::convert_utils::{easy_encode, easy_decode};
 use crate::convert_utils::error_correcting::hamming_code::{hamming_decode, hamming_encode};
 
+enum ConversionStatus { //Used to communicate between threads
+    End(Result<(), String>),
+}
+
+struct ConversionHandler { //handles the multithreaded conversion of files
+    timer_id: TimerToken,
+    receiver: Option<mpsc::Receiver<ConversionStatus>>
+}
+
+impl ConversionHandler {
+    fn new() -> ConversionHandler {
+        ConversionHandler {
+            timer_id: TimerToken::INVALID,
+            receiver: None,
+        }
+    }
+}
+
+impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
+    fn event(&mut self, child: &mut W, ctx: &mut EventCtx, event: &Event, data: &mut AppState, env: &Env) {
+        match event {
+            Event::Command(cmd) if cmd.is(START_CONVERSION) => { //start of conversion
+                match data.algorithm_type { //error message if no algorithm is selected
+                    AlgorithmType::Decode => {
+                        if let None = data.decode_algorithm {
+                            open_error(ctx, data, env, "Choose an algorithm!");
+                            return;
+                        }
+                    }
+                    AlgorithmType::Encode => {
+                        if let None = data.encode_algorithm {
+                            open_error(ctx, data, env, "Choose an algorithm!");
+                            return;
+                        }
+                    }
+                    AlgorithmType::None => {
+                        open_error(ctx, data, env, "Choose an algorithm!");
+                        return;
+                    }
+                }
+
+                //conversion of the file
+                data.calculating = true;
+                data.error_msg.clear(); //clear any prior error messages
+                open_loading(ctx, data, env);
+                let (tx, rx) = mpsc::channel::<ConversionStatus>();
+                self.receiver = Some(rx);
+
+                let data_clone = data.clone();
+                match data.algorithm_type {
+                    AlgorithmType::Encode => {
+                        thread::spawn(move || {
+                            match encode_file(
+                                Path::new(&data_clone.file_path),
+                                Path::new(&data_clone.save_path), 
+                                data_clone.encode_algorithm.unwrap(), //safe to call unwrap because it was checked earlier
+                                &data_clone.error_correcting) {
+                                    Ok(_) => tx.send(ConversionStatus::End(Ok(()))),
+                                    Err(e) => tx.send(ConversionStatus::End(Err(e))),
+                                }
+                            });
+                    },
+                    AlgorithmType::Decode => {
+                        thread::spawn(move || {
+                            match decode_file(
+                                Path::new(&data_clone.file_path),
+                                Path::new(&data_clone.save_path), 
+                                data_clone.decode_algorithm.unwrap(), //safe to call unwrap because it was checked earlier
+                                &data_clone.error_correcting) {
+                                Ok(_) => tx.send(ConversionStatus::End(Ok(()))),
+                                Err(e) => tx.send(ConversionStatus::End(Err(e))),
+                            }
+                        });
+                    },
+
+                    AlgorithmType::None => open_error(ctx, data, env, "Choose an algorithm!".to_string()),
+                }
+
+                self.timer_id = ctx.request_timer(Duration::from_millis(100)); //set timer to check for status
+            },
+
+            Event::Timer(id) if *id == self.timer_id => {
+                let rx = match &self.receiver { //channel with conversion thread
+                    Some(n) => n,
+                    None => { //
+                        open_error(ctx, data, env, "Error while converting file: Receiver was not created when receiving message");
+                        return child.event(ctx, event, data, env)
+                    }
+                };
+
+                match rx.try_recv() {
+                    Ok(n) => match n { //check which status the conversion currently has
+                        ConversionStatus::End(result) => {
+                            match result {
+                                Ok(_n) => {
+                                    data.calculating = false;
+                                    ctx.submit_command(GLOBAL_UPDATE);
+                                    println!("successfully converted and saved file!");
+                                },
+                                Err(e) => {
+                                    data.calculating = false;
+                                    open_error(ctx, data, env, e)
+                                }
+                            }
+                            return
+                        }
+                    },
+                    Err(e) => match e {
+                        TryRecvError::Empty => (),
+                        TryRecvError::Disconnected => {
+                            data.calculating = false;
+                            open_error(ctx, data, env, "Error while converting file: multithreading channel unexpectedly closed")
+                        },
+                    },
+                }
+
+                if data.calculating { //new timer if conversion is not completed
+                    self.timer_id = ctx.request_timer(Duration::from_millis(100));
+                }
+            },
+
+            _ => (),
+        }
+        child.event(ctx, event, data, env)
+    }
+}
 
 pub fn start_button_builder() -> impl Widget<AppState> {
     let button = Button::new("Convert")
         .on_click(|ctx: &mut EventCtx, data: &mut AppState, env: &Env| {
-            match data.algorithm_type { //error message if no algorithm is selected
-                AlgorithmType::Decode => {
-                    if let None = data.decode_algorithm {
-                        open_error(ctx, data, env, "Choose an algorithm!");
-                        return;
-                    }
-                }
-                AlgorithmType::Encode => {
-                    if let None = data.encode_algorithm {
-                        open_error(ctx, data, env, "Choose an algorithm!");
-                        return;
-                    }
-                }
-                AlgorithmType::None => {
-                    open_error(ctx, data, env, "Choose an algorithm!");
-                    return;
-                }
-            }
-
-            //conversion of the file
-            data.calculating = true;
-            data.error_msg.clear(); //clear any prior error messages
-            open_loading(ctx, data, env);
-            match data.algorithm_type {
-                AlgorithmType::Encode => match encode_file(
-                Path::new(&data.file_path),
-                Path::new(&data.save_path), 
-                data.encode_algorithm.clone().unwrap(),
-                &data.error_correcting) {
-                    Ok(_) => (),
-                    Err(e) => data.error_msg = e,
-                },
-                AlgorithmType::Decode => match decode_file(
-                Path::new(&data.file_path),
-                Path::new(&data.save_path), 
-                data.decode_algorithm.clone().unwrap(),
-                &data.error_correcting) {
-                    Ok(_) => (),
-                    Err(e) => data.error_msg = e,
-                },
-<<<<<<< HEAD
-                AlgorithmType::None => data.error_msg = "Choose an algorithm!".to_string(),
-=======
-                AlgorithmType::None => error_msg = Some("Choose an algorithm!".to_string()),
-            }
-            if let Some(_) = error_msg {
-                ctx.submit_command(ERROR);
-                open_error(ctx, data, env, error_msg.unwrap());
->>>>>>> bb0551c2946d7697e2087fe86d50e255c9bab3eb
-            }
-            data.calculating = false;
-            println!("successfully converted and saved file!");
-        });
+            ctx.submit_command(START_CONVERSION.to(Target::Global));
+        }).controller(ConversionHandler::new());
     button
 }
 
