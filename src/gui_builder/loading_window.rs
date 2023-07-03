@@ -2,8 +2,6 @@
 contains a function to open a window that lets the user see the current state of the conversion
 */
 
-use std::time::Duration;
-
 use druid::{WindowId, EventCtx, Env, WindowConfig, UnitPoint, WidgetExt, Widget, Event, Target, TimerToken};
 use druid::widget::{ Label, LineBreaking, Controller, Flex, Either};
 use super::AppState::AppState;
@@ -49,13 +47,20 @@ impl<W: Widget<AppState>> Controller<AppState,W> for LoadingController {
 pub fn open_loading(ctx: &mut EventCtx, data: &mut AppState, env: &Env) -> WindowId {
     let error_label = Label::new(|data: &AppState, _env: &Env| { //shows error messages
         format!("{}", data.error_msg)
-    });
+    })
+        .with_line_break_mode(LineBreaking::WordWrap)
+        .align_vertical(UnitPoint::CENTER)
+        .align_horizontal(UnitPoint::CENTER);
+
     let calculating_label = Label::new(|data: &AppState, _env: &Env| { //shows the current status of the conversion
         if data.calculating {
             return "Converting ..."
         }
         "Converting completed!"
-    });
+    })
+        .with_line_break_mode(LineBreaking::WordWrap)
+        .align_vertical(UnitPoint::CENTER)
+        .align_horizontal(UnitPoint::CENTER);
 
     let root_widget = Either::new(|data: &AppState, _env: &Env| {
         if !data.error_msg.is_empty() { //show error msg if an error occurs
