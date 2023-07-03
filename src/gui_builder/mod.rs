@@ -1,8 +1,8 @@
 /*
 contains everything to create the GUI
 */
-use druid::{Widget, Color};
-use druid::widget::Flex;
+use druid::{Widget, Color, Event};
+use druid::widget::{Flex, Controller};
 
 #[allow(non_snake_case)]
 pub mod AppState;
@@ -17,6 +17,7 @@ mod loading_window;
 pub use error_window::open_error;
 pub use decode_encode::{AlgorithmType, Decode, Encode};
 
+use crate::GLOBAL_UPDATE;
 
 //constants for the UI creation
 pub const BACKGROUND_COLOR: Color = Color::WHITE;
@@ -39,4 +40,15 @@ pub fn build_ui() -> impl Widget<AppState::AppState> {
             1.0,
         )
         .with_flex_child(start_button::start_button_builder(), 1.0)
+}
+
+struct MainController;
+
+impl<T, W: Widget<T>> Controller<T,W> for MainController {
+    fn event(&mut self, child: &mut W, ctx: &mut druid::EventCtx, event: &druid::Event, data: &mut T, env: &druid::Env) {
+        match event {
+            Event::Command(cmd) if cmd.is(GLOBAL_UPDATE) => ctx.request_update(),
+            _ => (),
+        }
+    }
 }
