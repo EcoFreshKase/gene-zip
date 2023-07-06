@@ -121,7 +121,7 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                                 },
                                 Err(e) => {
                                     data.calculating = false;
-                                    open_error(ctx, data, env, e)
+                                    data.error_msg = e;
                                 }
                             }
                             return
@@ -131,7 +131,7 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                         TryRecvError::Empty => (),
                         TryRecvError::Disconnected => {
                             data.calculating = false;
-                            open_error(ctx, data, env, "Error while converting file: multithreading channel unexpectedly closed")
+                            data.error_msg = "Error while converting file: multithreading channel unexpectedly closed".to_string();
                         },
                     },
                 }
