@@ -63,8 +63,9 @@ fn main() {
         algorithm_type: default_algorithm_type,
         decode_algorithm: None,
         encode_algorithm: None,
-        calculating: false,
-        error_msg: "".to_string(),
+        calculating: 0.0,
+        calculating_msg: String::new(),
+        error_msg: String::new(),
     };
 
     AppLauncher::with_window(main_window)

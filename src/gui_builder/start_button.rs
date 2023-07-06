@@ -21,7 +21,8 @@ use crate::convert_utils::{easy_encode, easy_decode};
 use crate::convert_utils::error_correcting::hamming_code::{hamming_decode, hamming_encode};
 
 enum ConversionStatus { //Used to communicate between threads
-    End(Result<(), String>),
+    Res(f64, String), // Result during the conversion. Contains an value added to AppState::calculating an a Message to display.
+    End(Result<(), String>), // End of the Conversion.
 }
 
 struct ConversionHandler { //handles the multithreaded conversion of files
@@ -62,7 +63,7 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                 }
 
                 //conversion of the file
-                data.calculating = true;
+                data.calculating = 0.1;
                 data.error_msg.clear(); //clear any prior error messages
                 open_loading(ctx, data, env);
                 let (tx, rx) = mpsc::channel::<ConversionStatus>();
@@ -112,15 +113,20 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
 
                 match rx.try_recv() {
                     Ok(n) => match n { //check which status the conversion currently has
+                        ConversionStatus::Res(progress, msg) => {
+                            data.calculating += progress;
+                            data.calculating_msg = msg;
+                        },
+
                         ConversionStatus::End(result) => {
                             match result {
                                 Ok(_n) => {
-                                    data.calculating = false;
+                                    data.calculating = 0.0;
                                     ctx.submit_command(GLOBAL_UPDATE);
                                     println!("successfully converted and saved file!");
                                 },
                                 Err(e) => {
-                                    data.calculating = false;
+                                    data.calculating = 0.0;
                                     data.error_msg = e;
                                 }
                             }
@@ -130,13 +136,13 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                     Err(e) => match e {
                         TryRecvError::Empty => (),
                         TryRecvError::Disconnected => {
-                            data.calculating = false;
+                            data.calculating = 0.0;
                             data.error_msg = "Error while converting file: multithreading channel unexpectedly closed".to_string();
                         },
                     },
                 }
 
-                if data.calculating { //new timer if conversion is not completed
+                if data.calculating != 1.0 { //new timer if conversion is not completed
                     self.timer_id = ctx.request_timer(Duration::from_millis(100));
                 }
             },

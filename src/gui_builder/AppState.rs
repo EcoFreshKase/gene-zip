@@ -14,7 +14,8 @@ pub struct AppState {
     pub algorithm_type: AlgorithmType,
     pub decode_algorithm: Option<Decode>, //storers the selected decode algorithm
     pub encode_algorithm: Option<Encode>, //storers the selected encode algorithm
-    pub calculating: bool, //whether a conversion is in progress
+    pub calculating: f64, // The progress of the conversion from 0 to 1.
+    pub calculating_msg: String, // Message to display current state of conversion
     pub error_msg: String //stores error messages
 }
 
