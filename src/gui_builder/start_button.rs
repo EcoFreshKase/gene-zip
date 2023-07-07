@@ -172,14 +172,8 @@ pub fn start_button_builder() -> impl Widget<AppState> {
 ///     - the name of the given file is invalid
 ///     - an error occurred while writing to a file
 fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode, error_correcting_algorithm: &ErrorCorrecting) -> Result<(), String>{
-    if match file_path.metadata() { //path is no file
-        Ok(n) => !n.is_file(),
-        Err(e) => return Err(e.to_string()),
-    } {
-        return Err("path does not lead to a file".to_string()) 
-    } 
-    if save_path.exists() { //path already exists
-        return Err("save path already exists".to_string()) 
+    if let Err(e) = check_paths(file_path, save_path) {
+        return Err(e)
     }
 
     let bytes = match read(file_path) { //read bytes from file
@@ -227,14 +221,8 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
 ///     - error while reading file
 ///     - error while writing file
 fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Decode, error_correcting_algorithm: &ErrorCorrecting) -> Result<(), String> {
-    if match file_path.metadata() { //path is not a file
-        Ok(n) => !n.is_file(),
-        Err(e) => return Err(e.to_string()),
-    } {
-        return Err("path does not lead to a file".to_string())
-    } 
-    if save_path.exists() { //path already exists
-        return Err("path to save to already exists".to_string())
+    if let Err(e) = check_paths(file_path, save_path) {
+        return Err(e)
     }
 
     //remove header and new lines
@@ -269,6 +257,19 @@ fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
     Ok(())
 }
 
+/// Checks if the given Paths is valid
+fn check_paths (file_path: &std::path::Path, save_path: &std::path::Path) -> Result<(), String> {
+    if match file_path.metadata() { //path is no file
+        Ok(n) => !n.is_file(),
+        Err(e) => return Err(e.to_string()),
+    } {
+        return Err("path does not lead to a file".to_string()) 
+    } 
+    if save_path.exists() { //path already exists
+        return Err("save path already exists".to_string()) 
+    }
+    Ok(())
+}
 
 /// gets a DNA-Sequence and converts it to the fasta format
 ///
