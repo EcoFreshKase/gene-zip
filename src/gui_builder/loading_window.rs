@@ -60,11 +60,9 @@ pub fn open_loading(ctx: &mut EventCtx, data: &mut AppState, env: &Env) -> Windo
         .with_flex_child(ProgressBar::new().lens(AppState::calculating), 1.0);
 
     let root_widget = Either::new(|data: &AppState, _env: &Env| {
-        /*
         if !data.error_msg.is_empty() { //show error msg if an error occurs
             return true
         }
-        */
         false //else show current conversion status
     }, error_label, calc_container).controller(LoadingController::new());
     
