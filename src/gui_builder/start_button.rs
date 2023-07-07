@@ -187,6 +187,11 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
     };
 
     //implement error correcting
+    println!("implementing error_correcting ...");
+    match tx.send(ConversionStatus::Res(0.0, "implementing error_correcting ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
+    }
     let bytes = match encode_error_correcting(bytes, error_correcting_algorithm) {
         Ok(n) => n,
         Err(e) => return Err(e),
@@ -197,10 +202,13 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         Ok(n) => n.len(),
         Err(e) => return Err(format!("error when accessing metadata: {}", e)),
     };
-    println!("{}", file_size);
     let chunk_size = file_size as usize/100; //chunks size is 1% of total file size
-    println!("{}", chunk_size);
     let mut dna = String::new();
+    println!("start of conversion");
+    match tx.send(ConversionStatus::Res(chunk_size as f64/file_size as f64, "converting binary to DNA ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
+    };
     for byte_chunks in bytes.chunks(chunk_size) { //encoding bytes in chunk_size chunks
         let result = match algorithm {
             Encode::EasyEncode => easy_encode(byte_chunks.to_vec()),
@@ -225,7 +233,16 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         },
         None => return Err("file invalid".to_string()),
     };
+    match tx.send(ConversionStatus::Res(0.0, "converting DNA sequenc to FASTA ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
+    }
     let file = convert_to_fasta(&dna, &Some(&[&dna.len().to_string(), &file_name.to_string()]));
+    
+    match tx.send(ConversionStatus::Res(0.0, "saving to a file ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
+    }
     match std::fs::write(save_path, file) {
         Err(_) => return Err("errror while writing to file".to_string()),
         _ => (),
