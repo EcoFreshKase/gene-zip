@@ -63,8 +63,9 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                 }
 
                 //conversion of the file
-                data.calculating = 0.1;
+                data.calculating = 0.0;
                 data.error_msg.clear(); //clear any prior error messages
+                data.calculating_msg = "starting conversion ...".to_string();
                 open_loading(ctx, data, env);
                 let (tx, rx) = mpsc::channel::<ConversionStatus>();
                 self.receiver = Some(rx);
@@ -77,7 +78,8 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                                 Path::new(&data_clone.file_path),
                                 Path::new(&data_clone.save_path), 
                                 data_clone.encode_algorithm.unwrap(), //safe to call unwrap because it was checked earlier
-                                &data_clone.error_correcting) {
+                                &data_clone.error_correcting,
+                                tx.clone()) {
                                     Ok(_) => tx.send(ConversionStatus::End(Ok(()))),
                                     Err(e) => tx.send(ConversionStatus::End(Err(e))),
                                 }
@@ -115,19 +117,22 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                     Ok(n) => match n { //check which status the conversion currently has
                         ConversionStatus::Res(progress, msg) => {
                             data.calculating += progress;
-                            data.calculating_msg = msg;
+                            data.calculating_msg = msg.clone();
+                            ctx.submit_command(GLOBAL_UPDATE);
                         },
 
                         ConversionStatus::End(result) => {
                             match result {
                                 Ok(_n) => {
-                                    data.calculating = 0.0;
+                                    data.calculating_msg = "successfully converted and saved file!".to_string();
                                     ctx.submit_command(GLOBAL_UPDATE);
                                     println!("successfully converted and saved file!");
                                 },
                                 Err(e) => {
+                                    println!("received an error: {}", e);
                                     data.calculating = 0.0;
                                     data.error_msg = e;
+                                    ctx.submit_command(GLOBAL_UPDATE);
                                 }
                             }
                             return
@@ -171,7 +176,7 @@ pub fn start_button_builder() -> impl Widget<AppState> {
 ///     - an error occurred while encoding
 ///     - the name of the given file is invalid
 ///     - an error occurred while writing to a file
-fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode, error_correcting_algorithm: &ErrorCorrecting) -> Result<(), String>{
+fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode, error_correcting_algorithm: &ErrorCorrecting, tx: std::sync::mpsc::Sender<ConversionStatus>) -> Result<(), String> {
     if let Err(e) = check_paths(file_path, save_path) {
         return Err(e)
     }
@@ -188,13 +193,30 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
     };
 
     //encode binary
-    let dna_result = match algorithm { //contains a DNA-Sequence
-        Encode::EasyEncode => easy_encode(bytes),
+    let file_size = match file_path.metadata(){
+        Ok(n) => n.len(),
+        Err(e) => return Err(format!("error when accessing metadata: {}", e)),
     };
-    let dna = match &dna_result {
-        Ok(_) => dna_result.unwrap(),
-        Err(e) => return Err(e.to_owned()),
-    };
+    println!("{}", file_size);
+    let chunk_size = file_size as usize/100; //chunks size is 1% of total file size
+    println!("{}", chunk_size);
+    let mut dna = String::new();
+    for byte_chunks in bytes.chunks(chunk_size) { //encoding bytes in chunk_size chunks
+        let result = match algorithm {
+            Encode::EasyEncode => easy_encode(byte_chunks.to_vec()),
+        };
+        match result {
+            Ok(n) => {
+                match tx.send(ConversionStatus::Res(chunk_size as f64/file_size as f64, "converting binary to DNA ...".to_string())) {
+                    Ok(_) => (),
+                    Err(e) => return Err(e.to_string())
+                };
+                dna.push_str(&n);
+            },
+            Err(e) => return Err(e)
+        }
+    }
+    println!("end conversion");
 
     let file_name = match file_path.file_name() {
         Some(n) => match n.to_str() {

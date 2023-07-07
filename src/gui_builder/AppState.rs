@@ -29,6 +29,7 @@ impl Display for AppState {
             Decode_Algorithm: {:?}\n
             Encode_Algorithm: {:?}\n
             Calculating: {}\n
+            Calculating_msg: {}\n
             Error_msg: {}\n",
             self.file_path,
             self.save_path,
@@ -37,7 +38,8 @@ impl Display for AppState {
             self.decode_algorithm,
             self.encode_algorithm,
             self.calculating,
-            self.error_msg
+            self.calculating_msg,
+            self.error_msg,
         )
     }
 }
