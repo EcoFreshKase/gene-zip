@@ -2,7 +2,7 @@
 
 use std::env;
 use std::path::Path;
-use druid::{WindowDesc, AppLauncher, Selector};
+use druid::{WindowDesc, AppLauncher, Selector, theme};
 
 mod convert_utils;
 mod gui_builder;
@@ -72,6 +72,9 @@ fn main() {
 
     AppLauncher::with_window(main_window)
         .log_to_console()
+        .configure_env(|env, _| {
+            env.set(theme::WIDE_WIDGET_WIDTH, 200.0);
+        })
         .launch(initial_state)
         .expect("Failed to launch application");
 }
