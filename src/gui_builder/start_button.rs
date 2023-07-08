@@ -10,6 +10,7 @@ use std::fs::{self, read};
 use std::thread;
 use std::sync::mpsc::{self, TryRecvError};
 use std::time::Duration;
+use std::str;
 use druid::{Widget, EventCtx, Env, Event, WidgetExt, TimerToken, Target};
 use druid::widget::{Button, Controller};
 use super::AppState::AppState;
@@ -92,7 +93,8 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                                 Path::new(&data_clone.file_path),
                                 Path::new(&data_clone.save_path), 
                                 data_clone.decode_algorithm.unwrap(), //safe to call unwrap because it was checked earlier
-                                &data_clone.error_correcting) {
+                                &data_clone.error_correcting,
+                                tx.clone()) {
                                 Ok(_) => tx.send(ConversionStatus::End(Ok(()))),
                                 Err(e) => tx.send(ConversionStatus::End(Err(e))),
                             }
@@ -209,15 +211,7 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         Ok(n) => n.len(),
         Err(e) => return Err(format!("error when accessing metadata: {}", e)),
     };
-    let chunk_size = {
-        let mut out = file_size as usize/100; //chunks size is 1% of total file size
-        
-        // When the file is smaller then 100 bytes set the chunk_size to file_size.
-        if out <= 0 {
-            out = file_size as usize;
-        }
-        out
-    };
+    let chunk_size = get_chunk_size(&(file_size as usize));
     let mut dna = String::new();
     println!("start of conversion");
     match tx.send(ConversionStatus::Res(chunk_size as f64/file_size as f64, "converting binary to DNA ...".to_string())) {
@@ -274,7 +268,7 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
 ///     - given file is not a fasta file
 ///     - error while reading file
 ///     - error while writing file
-fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Decode, error_correcting_algorithm: &ErrorCorrecting) -> Result<(), String> {
+fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Decode, error_correcting_algorithm: &ErrorCorrecting, tx: std::sync::mpsc::Sender<ConversionStatus>) -> Result<(), String> {
     if let Err(e) = check_paths(file_path, save_path) {
         return Err(e)
     }
@@ -291,23 +285,52 @@ fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         Err(_) => return Err("error while reading file. Please try again.".to_string()), 
     };
 
-    let binary = match algorithm {
-        Decode::EasyDecode => easy_decode(&sequenc),
+    let chunk_size = { // Has to be a multiple of 4
+        let size = get_chunk_size(&sequenc.len());
+        println!("{} {} {}", sequenc.len(), size, size%4);
+        let size = size - size%4 + 4; // Remove the remainder to make the size a multiple of 4. Add 4 to prevent the size from becoming 0.
+        size
     };
-    let binary = match binary { //contains the binary version of the sequence
-        Ok(n) => {
-            match decode_error_correcting(n, error_correcting_algorithm) {//reverse the error correcting
-                Ok(n) => n,
-                Err(e) => return Err(e),
-            }
-        },
+    let mut binary: Vec<u8> = Vec::new();
+    let seq_iterator = sequenc.as_bytes() //iterator over chunks of the sequenc
+        .chunks(chunk_size)
+        .map(str::from_utf8)
+        .collect::<Result<Vec<&str>, _>>()
+        .unwrap();
+    
+    if let Err(e) = tx.send(ConversionStatus::Res(chunk_size as f64/sequenc.len() as f64, "converting DNA to binary ...".to_string())) {
+        return Err(e.to_string())
+    };
+    for sequenc_chunk in seq_iterator {
+        let res = match algorithm {
+            Decode::EasyDecode => easy_decode(&sequenc_chunk),
+        };
+        match res { //contains the binary version of the sequence
+            Ok(mut n) => binary.append(&mut n),
+            Err(e) => return Err(e),
+        }
+        match tx.send(ConversionStatus::Res(chunk_size as f64/sequenc.len() as f64, "converting DNA to binary ...".to_string())) {
+            Ok(_) => (),
+            Err(e) => return Err(e.to_string())
+        };
+    }
+
+    match tx.send(ConversionStatus::Res(0.0 , "reversing error correcting ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
+    };
+    let binary = match decode_error_correcting(binary, error_correcting_algorithm) { //reverse the error correcting
+        Ok(n) => n,
         Err(e) => return Err(e),
     };
 
+    match tx.send(ConversionStatus::Res(0.0 , "saving to a file ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
+    };
     if let Err(_) = std::fs::write(save_path, binary) {
         return Err("error while writing to file".to_string())
     }
-
     Ok(())
 }
 
@@ -373,4 +396,15 @@ fn decode_error_correcting(byte: Vec<u8>, algorithm: &ErrorCorrecting) -> Result
         Ok(n) => Ok(n),
         Err(e) => Err(format!("error while reversing error correcting code: {}", e).to_string()),
     }
+}
+
+/// Returns a size for the chunks in which the file to convert gets split
+fn get_chunk_size(size: &usize) -> usize {
+    let mut out = size/20; //chunks size is 5% of total size
+        
+    // When the size is smaller than 100 units set the chunk_size to size.
+    if out <= 0 {
+        out = *size;
+    }
+    out
 }
