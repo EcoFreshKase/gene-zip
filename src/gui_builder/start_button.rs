@@ -20,6 +20,7 @@ use crate::{START_CONVERSION, GLOBAL_UPDATE};
 use crate::convert_utils::{easy_encode, easy_decode};
 use crate::convert_utils::error_correcting::hamming_code::{hamming_decode, hamming_encode};
 
+#[derive(Debug)]
 enum ConversionStatus { //Used to communicate between threads
     Res(f64, String), // Result during the conversion. Contains an value added to AppState::calculating an a Message to display.
     End(Result<(), String>), // End of the Conversion.
@@ -119,6 +120,11 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                             data.calculating += progress;
                             data.calculating_msg = msg.clone();
                             ctx.submit_command(GLOBAL_UPDATE);
+
+                            // The conversion can't be done if a ConversionStatus::Res is received
+                            if data.calculating >= 1.0 {
+                                data.calculating = 0.9;
+                            }
                         },
 
                         ConversionStatus::End(result) => {
