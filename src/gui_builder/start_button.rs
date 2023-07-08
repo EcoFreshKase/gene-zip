@@ -116,7 +116,7 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                     }
                 };
 
-                match rx.try_recv() {
+                match get_last_update(&rx) {
                     Ok(n) => match n { //check which status the conversion currently has
                         ConversionStatus::Res(progress, msg) => {
                             data.calculating += progress;
@@ -407,4 +407,23 @@ fn get_chunk_size(size: &usize) -> usize {
         out = *size;
     }
     out
+}
+
+/// Receives all available values of this receiver but only returns the last received value.
+/// Returns an error if there is no available value to receive.
+fn get_last_update(rx: &mpsc::Receiver<ConversionStatus>) -> Result<ConversionStatus, mpsc::TryRecvError> {
+    let mut last_value: Option<ConversionStatus> = None;
+    loop {
+        match rx.try_recv() {
+            Ok(n) => last_value = Some(n),
+            Err(e) => {
+                if let None = last_value {
+                    return Err(e)
+                }
+                break
+            }
+        }
+    }
+
+    Ok(last_value.unwrap())
 }
