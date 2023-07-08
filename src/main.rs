@@ -2,7 +2,7 @@
 
 use std::env;
 use std::path::Path;
-use druid::{WindowDesc, AppLauncher, Selector};
+use druid::{WindowDesc, AppLauncher, Selector, theme};
 
 mod convert_utils;
 mod gui_builder;
@@ -19,6 +19,10 @@ fn main() {
 
     //let args: Vec<String> = env::args().collect();
     let args: Vec<String> = vec![String::from("C:\\Users\\alexa\\Desktop\\Coding Projekte\\g-zip\\dummy_file.txt")];
+    //let args: Vec<String> = vec![String::from("C:\\Users\\alexa\\OneDrive\\Bilder\\Anime\\I've been killing slimes for 300 years\\91139172_p0_master1200.jpg")]; //big image
+    //let args: Vec<String> = vec![String::from("D:\\Bilder\\Insta\\convert.7z")]; //very large file
+    
+    let args: Vec<String> = vec![String::from("C:\\Users\\alexa\\Desktop\\Coding Projekte\\g-zip\\dummy_file.fasta")]; // FASTA file
     let path = args.get(0).unwrap();
 
     //default values for the start of the application
@@ -63,12 +67,16 @@ fn main() {
         algorithm_type: default_algorithm_type,
         decode_algorithm: None,
         encode_algorithm: None,
-        calculating: false,
-        error_msg: "".to_string(),
+        calculating: 0.0,
+        calculating_msg: String::new(),
+        error_msg: String::new(),
     };
 
     AppLauncher::with_window(main_window)
         .log_to_console()
+        .configure_env(|env, _| {
+            env.set(theme::WIDE_WIDGET_WIDTH, 200.0);
+        })
         .launch(initial_state)
         .expect("Failed to launch application");
 }

@@ -2,8 +2,8 @@
 contains a function to open a window that lets the user see the current state of the conversion
 */
 
-use druid::{WindowId, EventCtx, Env, WindowConfig, UnitPoint, WidgetExt, Widget, Event, Target, TimerToken};
-use druid::widget::{ Label, LineBreaking, Controller, Flex, Either};
+use druid::{WindowId, EventCtx, Env, WindowConfig, UnitPoint, WidgetExt, Widget, Event, Target, TimerToken, theme};
+use druid::widget::{ Label, LineBreaking, Controller, Flex, Either, ProgressBar};
 use super::AppState::AppState;
 use crate::{ERROR, NEW_LOADING_WINDOW};
 
@@ -49,25 +49,29 @@ pub fn open_loading(ctx: &mut EventCtx, data: &mut AppState, env: &Env) -> Windo
         format!("{}", data.error_msg)
     })
         .with_line_break_mode(LineBreaking::WordWrap)
-        .align_vertical(UnitPoint::CENTER)
-        .align_horizontal(UnitPoint::CENTER);
+        .center();
 
-    let calculating_label = Label::new(|data: &AppState, _env: &Env| { //shows the current status of the conversion
-        if data.calculating {
-            return "Converting ..."
-        }
-        "Converting completed!"
+    let calc_label = Label::new(|data: &AppState, _env: &Env| {
+        format!("{}", data.calculating_msg)
     })
         .with_line_break_mode(LineBreaking::WordWrap)
-        .align_vertical(UnitPoint::CENTER)
-        .align_horizontal(UnitPoint::CENTER);
+        .center();
+
+    let calc_container = Flex::column()
+        .with_flex_child(calc_label, 1.0)
+        .with_flex_child(
+            ProgressBar::new().lens(AppState::calculating)
+                .align_horizontal(UnitPoint::CENTER)
+                .expand_width(),
+            1.0
+        );
 
     let root_widget = Either::new(|data: &AppState, _env: &Env| {
         if !data.error_msg.is_empty() { //show error msg if an error occurs
             return true
         }
         false //else show current conversion status
-    }, error_label, calculating_label).controller(LoadingController::new());
+    }, error_label, calc_container).controller(LoadingController::new());
     
     let size = (300., 200.);
     

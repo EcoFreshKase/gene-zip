@@ -10,6 +10,7 @@ use std::fs::{self, read};
 use std::thread;
 use std::sync::mpsc::{self, TryRecvError};
 use std::time::Duration;
+use std::str;
 use druid::{Widget, EventCtx, Env, Event, WidgetExt, TimerToken, Target};
 use druid::widget::{Button, Controller};
 use super::AppState::AppState;
@@ -20,8 +21,10 @@ use crate::{START_CONVERSION, GLOBAL_UPDATE};
 use crate::convert_utils::{easy_encode, easy_decode};
 use crate::convert_utils::error_correcting::hamming_code::{hamming_decode, hamming_encode};
 
+#[derive(Debug)]
 enum ConversionStatus { //Used to communicate between threads
-    End(Result<(), String>),
+    Res(f64, String), // Result during the conversion. Contains an value added to AppState::calculating an a Message to display.
+    End(Result<(), String>), // End of the Conversion.
 }
 
 struct ConversionHandler { //handles the multithreaded conversion of files
@@ -62,8 +65,9 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                 }
 
                 //conversion of the file
-                data.calculating = true;
+                data.calculating = 0.0;
                 data.error_msg.clear(); //clear any prior error messages
+                data.calculating_msg = "starting conversion ...".to_string();
                 open_loading(ctx, data, env);
                 let (tx, rx) = mpsc::channel::<ConversionStatus>();
                 self.receiver = Some(rx);
@@ -76,7 +80,8 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                                 Path::new(&data_clone.file_path),
                                 Path::new(&data_clone.save_path), 
                                 data_clone.encode_algorithm.unwrap(), //safe to call unwrap because it was checked earlier
-                                &data_clone.error_correcting) {
+                                &data_clone.error_correcting,
+                                tx.clone()) {
                                     Ok(_) => tx.send(ConversionStatus::End(Ok(()))),
                                     Err(e) => tx.send(ConversionStatus::End(Err(e))),
                                 }
@@ -88,7 +93,8 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                                 Path::new(&data_clone.file_path),
                                 Path::new(&data_clone.save_path), 
                                 data_clone.decode_algorithm.unwrap(), //safe to call unwrap because it was checked earlier
-                                &data_clone.error_correcting) {
+                                &data_clone.error_correcting,
+                                tx.clone()) {
                                 Ok(_) => tx.send(ConversionStatus::End(Ok(()))),
                                 Err(e) => tx.send(ConversionStatus::End(Err(e))),
                             }
@@ -110,18 +116,32 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                     }
                 };
 
-                match rx.try_recv() {
+                match get_last_update(&rx) {
                     Ok(n) => match n { //check which status the conversion currently has
+                        ConversionStatus::Res(progress, msg) => {
+                            data.calculating += progress;
+                            data.calculating_msg = msg.clone();
+                            ctx.submit_command(GLOBAL_UPDATE);
+
+                            // The conversion can't be done if a ConversionStatus::Res is received
+                            if data.calculating >= 1.0 {
+                                data.calculating = 0.9;
+                            }
+                        },
+
                         ConversionStatus::End(result) => {
                             match result {
                                 Ok(_n) => {
-                                    data.calculating = false;
+                                    data.calculating = 1.0;
+                                    data.calculating_msg = "successfully converted and saved file!".to_string();
                                     ctx.submit_command(GLOBAL_UPDATE);
                                     println!("successfully converted and saved file!");
                                 },
                                 Err(e) => {
-                                    data.calculating = false;
+                                    println!("received an error: {}", e);
+                                    data.calculating = 0.0;
                                     data.error_msg = e;
+                                    ctx.submit_command(GLOBAL_UPDATE);
                                 }
                             }
                             return
@@ -130,13 +150,13 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                     Err(e) => match e {
                         TryRecvError::Empty => (),
                         TryRecvError::Disconnected => {
-                            data.calculating = false;
+                            data.calculating = 0.0;
                             data.error_msg = "Error while converting file: multithreading channel unexpectedly closed".to_string();
                         },
                     },
                 }
 
-                if data.calculating { //new timer if conversion is not completed
+                if data.calculating != 1.0 { //new timer if conversion is not completed
                     self.timer_id = ctx.request_timer(Duration::from_millis(100));
                 }
             },
@@ -165,15 +185,9 @@ pub fn start_button_builder() -> impl Widget<AppState> {
 ///     - an error occurred while encoding
 ///     - the name of the given file is invalid
 ///     - an error occurred while writing to a file
-fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode, error_correcting_algorithm: &ErrorCorrecting) -> Result<(), String>{
-    if match file_path.metadata() { //path is no file
-        Ok(n) => !n.is_file(),
-        Err(e) => return Err(e.to_string()),
-    } {
-        return Err("path does not lead to a file".to_string()) 
-    } 
-    if save_path.exists() { //path already exists
-        return Err("save path already exists".to_string()) 
+fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode, error_correcting_algorithm: &ErrorCorrecting, tx: std::sync::mpsc::Sender<ConversionStatus>) -> Result<(), String> {
+    if let Err(e) = check_paths(file_path, save_path) {
+        return Err(e)
     }
 
     let bytes = match read(file_path) { //read bytes from file
@@ -182,19 +196,44 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
     };
 
     //implement error correcting
+    println!("implementing error_correcting ...");
+    match tx.send(ConversionStatus::Res(0.0, "implementing error_correcting ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
+    }
     let bytes = match encode_error_correcting(bytes, error_correcting_algorithm) {
         Ok(n) => n,
         Err(e) => return Err(e),
     };
 
     //encode binary
-    let dna_result = match algorithm { //contains a DNA-Sequence
-        Encode::EasyEncode => easy_encode(bytes),
+    let file_size = match file_path.metadata(){
+        Ok(n) => n.len(),
+        Err(e) => return Err(format!("error when accessing metadata: {}", e)),
     };
-    let dna = match &dna_result {
-        Ok(_) => dna_result.unwrap(),
-        Err(e) => return Err(e.to_owned()),
+    let chunk_size = get_chunk_size(&(file_size as usize));
+    let mut dna = String::new();
+    println!("start of conversion");
+    match tx.send(ConversionStatus::Res(chunk_size as f64/file_size as f64, "converting binary to DNA ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
     };
+    for byte_chunks in bytes.chunks(chunk_size) { //encoding bytes in chunk_size chunks
+        let result = match algorithm {
+            Encode::EasyEncode => easy_encode(byte_chunks.to_vec()),
+        };
+        match result {
+            Ok(n) => {
+                match tx.send(ConversionStatus::Res(chunk_size as f64/file_size as f64, "converting binary to DNA ...".to_string())) {
+                    Ok(_) => (),
+                    Err(e) => return Err(e.to_string())
+                };
+                dna.push_str(&n);
+            },
+            Err(e) => return Err(e)
+        }
+    }
+    println!("end conversion");
 
     let file_name = match file_path.file_name() {
         Some(n) => match n.to_str() {
@@ -203,7 +242,16 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         },
         None => return Err("file invalid".to_string()),
     };
+    match tx.send(ConversionStatus::Res(0.0, "converting DNA sequenc to FASTA ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
+    }
     let file = convert_to_fasta(&dna, &Some(&[&dna.len().to_string(), &file_name.to_string()]));
+    
+    match tx.send(ConversionStatus::Res(0.0, "saving to a file ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
+    }
     match std::fs::write(save_path, file) {
         Err(_) => return Err("errror while writing to file".to_string()),
         _ => (),
@@ -220,15 +268,9 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
 ///     - given file is not a fasta file
 ///     - error while reading file
 ///     - error while writing file
-fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Decode, error_correcting_algorithm: &ErrorCorrecting) -> Result<(), String> {
-    if match file_path.metadata() { //path is not a file
-        Ok(n) => !n.is_file(),
-        Err(e) => return Err(e.to_string()),
-    } {
-        return Err("path does not lead to a file".to_string())
-    } 
-    if save_path.exists() { //path already exists
-        return Err("path to save to already exists".to_string())
+fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Decode, error_correcting_algorithm: &ErrorCorrecting, tx: std::sync::mpsc::Sender<ConversionStatus>) -> Result<(), String> {
+    if let Err(e) = check_paths(file_path, save_path) {
+        return Err(e)
     }
 
     //remove header and new lines
@@ -243,26 +285,68 @@ fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         Err(_) => return Err("error while reading file. Please try again.".to_string()), 
     };
 
-    let binary = match algorithm {
-        Decode::EasyDecode => easy_decode(&sequenc),
+    let chunk_size = { // Has to be a multiple of 4
+        let size = get_chunk_size(&sequenc.len());
+        println!("{} {} {}", sequenc.len(), size, size%4);
+        let size = size - size%4 + 4; // Remove the remainder to make the size a multiple of 4. Add 4 to prevent the size from becoming 0.
+        size
     };
-    let binary = match binary { //contains the binary version of the sequence
-        Ok(n) => {
-            match decode_error_correcting(n, error_correcting_algorithm) {//reverse the error correcting
-                Ok(n) => n,
-                Err(e) => return Err(e),
-            }
-        },
+    let mut binary: Vec<u8> = Vec::new();
+    let seq_iterator = sequenc.as_bytes() //iterator over chunks of the sequenc
+        .chunks(chunk_size)
+        .map(str::from_utf8)
+        .collect::<Result<Vec<&str>, _>>()
+        .unwrap();
+    
+    if let Err(e) = tx.send(ConversionStatus::Res(chunk_size as f64/sequenc.len() as f64, "converting DNA to binary ...".to_string())) {
+        return Err(e.to_string())
+    };
+    for sequenc_chunk in seq_iterator {
+        let res = match algorithm {
+            Decode::EasyDecode => easy_decode(&sequenc_chunk),
+        };
+        match res { //contains the binary version of the sequence
+            Ok(mut n) => binary.append(&mut n),
+            Err(e) => return Err(e),
+        }
+        match tx.send(ConversionStatus::Res(chunk_size as f64/sequenc.len() as f64, "converting DNA to binary ...".to_string())) {
+            Ok(_) => (),
+            Err(e) => return Err(e.to_string())
+        };
+    }
+
+    match tx.send(ConversionStatus::Res(0.0 , "reversing error correcting ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
+    };
+    let binary = match decode_error_correcting(binary, error_correcting_algorithm) { //reverse the error correcting
+        Ok(n) => n,
         Err(e) => return Err(e),
     };
 
+    match tx.send(ConversionStatus::Res(0.0 , "saving to a file ...".to_string())) {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string())
+    };
     if let Err(_) = std::fs::write(save_path, binary) {
         return Err("error while writing to file".to_string())
     }
-
     Ok(())
 }
 
+/// Checks if the given Paths is valid
+fn check_paths (file_path: &std::path::Path, save_path: &std::path::Path) -> Result<(), String> {
+    if match file_path.metadata() { //path is no file
+        Ok(n) => !n.is_file(),
+        Err(e) => return Err(e.to_string()),
+    } {
+        return Err("path does not lead to a file".to_string()) 
+    } 
+    if save_path.exists() { //path already exists
+        return Err("save path already exists".to_string()) 
+    }
+    Ok(())
+}
 
 /// gets a DNA-Sequence and converts it to the fasta format
 ///
@@ -312,4 +396,34 @@ fn decode_error_correcting(byte: Vec<u8>, algorithm: &ErrorCorrecting) -> Result
         Ok(n) => Ok(n),
         Err(e) => Err(format!("error while reversing error correcting code: {}", e).to_string()),
     }
+}
+
+/// Returns a size for the chunks in which the file to convert gets split
+fn get_chunk_size(size: &usize) -> usize {
+    let mut out = size/20; //chunks size is 5% of total size
+        
+    // When the size is smaller than 100 units set the chunk_size to size.
+    if out <= 0 {
+        out = *size;
+    }
+    out
+}
+
+/// Receives all available values of this receiver but only returns the last received value.
+/// Returns an error if there is no available value to receive.
+fn get_last_update(rx: &mpsc::Receiver<ConversionStatus>) -> Result<ConversionStatus, mpsc::TryRecvError> {
+    let mut last_value: Option<ConversionStatus> = None;
+    loop {
+        match rx.try_recv() {
+            Ok(n) => last_value = Some(n),
+            Err(e) => {
+                if let None = last_value {
+                    return Err(e)
+                }
+                break
+            }
+        }
+    }
+
+    Ok(last_value.unwrap())
 }
