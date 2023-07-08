@@ -124,6 +124,7 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                         ConversionStatus::End(result) => {
                             match result {
                                 Ok(_n) => {
+                                    data.calculating = 1.0;
                                     data.calculating_msg = "successfully converted and saved file!".to_string();
                                     ctx.submit_command(GLOBAL_UPDATE);
                                     println!("successfully converted and saved file!");
@@ -202,7 +203,15 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         Ok(n) => n.len(),
         Err(e) => return Err(format!("error when accessing metadata: {}", e)),
     };
-    let chunk_size = file_size as usize/100; //chunks size is 1% of total file size
+    let chunk_size = {
+        let mut out = file_size as usize/100; //chunks size is 1% of total file size
+        
+        // When the file is smaller then 100 bytes set the chunk_size to file_size.
+        if out <= 0 {
+            out = file_size as usize;
+        }
+        out
+    };
     let mut dna = String::new();
     println!("start of conversion");
     match tx.send(ConversionStatus::Res(chunk_size as f64/file_size as f64, "converting binary to DNA ...".to_string())) {
