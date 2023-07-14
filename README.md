@@ -48,7 +48,7 @@ how do you use g-zip?
     
 You should now see the following screen. (The paths on top will be different from file to file)
 
-![g-zip after start](<g-zip after start.png>)
+![g-zip after start](https://github.com/EcoFreshKase/g-zip/blob/README-creation/README%20images/g-zip%20after%20start.png)
 
 On top there is "File-Path:". To the right of it you can see 2 paths. The top path of the two is the path of the file you will convert. Under that is the path the file be saved in. You can change it like you want.
 
