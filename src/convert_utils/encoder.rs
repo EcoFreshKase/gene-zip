@@ -21,7 +21,7 @@ pub fn easy_encode(bytes: Vec<u8>) -> Result<String, String> {
             .collect::<Vec<char>>();
 
         for double_bit in double_bits.chunks(2) {
-            //match every douple bit to nucleotide
+            //match every double bit to nucleotide
             match &double_bit.iter().collect::<String>()[..] {
                 "00" => output.push('A'),
                 "01" => output.push('T'),
