@@ -1,3 +1,0 @@
-A programm to convert binary files to DNA sequences, encode them with error correcting codes, customize the FASTA-Header and decode DNA sequences back to binary data.
-
-FASTA-Header customization is not yet implemented.
