@@ -20,7 +20,7 @@ In this case you could use g-zip (or at least I hope it could be someday) to con
 ## **Features**
 ### **1. DNA⇔Binary Conversion**
 Currently there is one algorithm to convert between binary and genome. (There will hopefully be more added in the future!)
-- easy-encode / easy-decode
+- **easy-encode / easy-decode**
 
     converts between binary and DNA by matching two bits to a nucleotide
     - 00 ⇔ A
@@ -30,24 +30,48 @@ Currently there is one algorithm to convert between binary and genome. (There wi
 
 ### **2. Error correcting**
 Again, currently there is one error correcting code available. (There will hopefully be more added in the future!)
-- 7,4 Hamming-Code
+- **7,4 Hamming-Code**
 
     for further information on the 7,4 Hamming-Code see [here](https://en.wikipedia.org/wiki/Hamming(7,4))
 
-### **3. FASTA-Header customization**
+### **3. FASTA-Header customization** (not implemented)
+You can customize the header of the FASTA-file you want to save your DNA-sequence in. This allows you to store further information about the sequence you might need.
 
 
 ## **Installation**
+An installer will be created in the future. For now you have to install g-zip yourself by forking the repository, compiling the code and changing the registry yourself.
 
 ## **Usage**
-(use a couple screenshots and examples to make the reader familiar with g-zip)
+how do you use g-zip?
+1. right-click the file you want to convert
+2. select 'Start g-zip'
+    
+You should now see the following screen. (The paths on top will be different from file to file)
+
+![g-zip after start](<g-zip after start.png>)
+
+On top there is "File-Path:". To the right of it you can see 2 paths. The top path of the two is the path of the file you will convert. Under that is the path the file be saved in. You can change it like you want.
+
+In the middle of the screen there is a drop-down menu to select an error-correcting code.
+
+Bellow the selection of error correcting codes is a button "config header" where you can, well, config the FASTA-header.
+
+You can choose the algorithm to decode/encode your file on the right side. Firstly choose wether you want to decode or encode your file. After that you can choose from all available algorithms. After that you press the convert button and wait until your file is converted.
+
+
+## **Roadmap**
+g-zip is still under development. I still have many things I want to add. Here is a list of things I want to add in the future:
+* an installer to, well, install the program
+* possibility to customize the FASTA-Header
+* improve the performance of easy-encode/easy-decode
+* more algorithms to convert between binary and dna
+* more error-correcting algorithms
+
 
 ## **Get in contact**
-
-## **Roadmap (?)**
-* More error-correcting algorithms
-* more algorithms to convert between binary and dna
-* FASTA-Header customization is not yet implemented.
+If you have any suggestions for the UI, have any problems, need more possibilities for DNA⇔Binary Conversion or have something on your mind you want to share feel free to open an issue describing whatever is on your mind or send me a message on discord (eco_fresh_kaese)
 
 ## **Contributing**
+Feel free to work on an issue and make a pull request. I would be really happy if more people would work on my little project (～￣▽￣)～
 
+A good first contribution would be to add a new error-correcting code or a new algorithm to convert between DNA and binary
