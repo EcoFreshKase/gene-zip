@@ -71,6 +71,8 @@ g-zip is still under development. I still have many things I want to add. Here i
 ## **Get in contact**
 If you have any suggestions for the UI, have any problems, need more possibilities for DNA⇔Binary Conversion or have something on your mind you want to share feel free to open an issue describing whatever is on your mind or send me a message on discord (eco_fresh_kaese)
 
+If use g-zip in a real world situation (e.g. a situation similar to the one described in Examples) please let me know I would be really happy to know if this small program could help someone.
+
 ## **Contributing**
 Feel free to work on an issue and make a pull request. I would be really happy if more people would work on my little project (～￣▽￣)～
 
