@@ -17,19 +17,19 @@ pub fn easy_encode(bytes: Vec<u8>) -> Result<String, String> {
     let mut output = String::new();
     for byte in bytes {
         //split byte into 2 bit chunks
-        let double_bits = format!("{:08b}", byte).chars() 
-            .collect::<Vec<char>>();
-
-        for double_bit in double_bits.chunks(2) {
-            //match every double bit to nucleotide
-            match &double_bit.iter().collect::<String>()[..] {
-                "00" => output.push('A'),
-                "01" => output.push('T'),
-                "10" => output.push('C'),
-                "11" => output.push('G'),
-                s @ _ => return Err(format!("found invalid string while matching bits: \"{}\"", s).to_string())
-            };
-        }
+        format!("{:08b}", byte).chars() 
+            .collect::<Vec<char>>()
+            .chunks(2)
+            .for_each(|double_bit| {
+                match double_bit {
+                    //match every double bit to nucleotide
+                    ['0', '0'] => output.push('A'),
+                    ['0', '1'] => output.push('T'),
+                    ['1', '0'] => output.push('C'),
+                    ['1', '1'] => output.push('G'),
+                    _ => (),
+                }
+            });
     }
 
     Ok(output)
