@@ -17,6 +17,9 @@ Suppose you are a scientist working on a new method to store DNA containing bina
 
 In this case you could use g-zip (or at least I hope it could be someday) to convert your file to DNA and synthesize it to test your storage method.
 
+## **Installation**
+The installer for version 1.0.0 will published when the app reaches this state. For now you can fork the repository, compile the code yourself and add the path to the executable in the [Inno Setup file](https://github.com/EcoFreshKase/g-zip/blob/main/g-zip%20installer.iss). For that you need to replace the source path in line 34 with your path. After that you have to compile this script with Inno Setup and run the installer.
+
 ## **Features**
 ### **1. DNA⇔Binary Conversion**
 Currently there is one algorithm to convert between binary and genome. (There will hopefully be more added in the future!)
@@ -36,10 +39,6 @@ Again, currently there is one error correcting code available. (There will hopef
 
 ### **3. FASTA-Header customization** (not implemented)
 You can customize the header of the FASTA-file you want to save your DNA-sequence in. This allows you to store further information about the sequence you might need.
-
-
-## **Installation**
-An installer will be created in the future. For now you have to install g-zip yourself by forking the repository, compiling the code and changing the registry yourself.
 
 ## **Usage**
 how do you use g-zip?
