@@ -2,12 +2,31 @@
 contains a function to open a window that lets the user see the current state of the conversion
 */
 
-use druid::{WindowId, EventCtx, Env, WindowConfig, UnitPoint, WidgetExt, Widget, Event, Target, TimerToken, theme};
-use druid::widget::{ Label, LineBreaking, Controller, Flex, Either, ProgressBar};
+use druid::{WindowId, EventCtx, Env, WindowConfig, UnitPoint, WidgetExt, Widget, Event, Target, Size};
+use druid::commands::CLOSE_WINDOW;
+use druid::widget::{Label, LineBreaking, Controller, Flex, Either, ProgressBar, Button};
 use super::AppState::AppState;
-use crate::{ERROR, NEW_LOADING_WINDOW};
+use crate::NEW_LOADING_WINDOW;
 
-//controlls when to close the sub window
+// An empty Widget. Just nothing.
+// Used in an Either Widget to only show another Widget if a condition is true.
+struct EmptyWidget;
+
+impl<T> Widget<T> for EmptyWidget {
+    fn event(&mut self, _ctx: &mut EventCtx, _event: &Event, _data: &mut T, _env: &Env) {}
+
+    fn lifecycle(&mut self, _ctx: &mut druid::LifeCycleCtx, _event: &druid::LifeCycle, _data: &T, _env: &Env) {}
+
+    fn update(&mut self, _ctx: &mut druid::UpdateCtx, _old_data: &T, _data: &T, _env: &Env) {}
+
+    fn layout(&mut self, _ctx: &mut druid::LayoutCtx, _bc: &druid::BoxConstraints, _data: &T, _env: &Env) -> druid::Size {
+        Size::new(0.0, 0.0)
+    }
+
+    fn paint(&mut self, _ctx: &mut druid::PaintCtx, _data: &T, _env: &Env) {}
+}
+
+//controls when to close the sub window
 struct LoadingController {}
 
 impl LoadingController {
@@ -57,6 +76,22 @@ pub fn open_loading(ctx: &mut EventCtx, data: &mut AppState, env: &Env) -> Windo
         .with_line_break_mode(LineBreaking::WordWrap)
         .center();
 
+    let close_button = Button::new("close")
+        .on_click(|ctx: &mut EventCtx, _data: &mut AppState, _env: &Env| {
+            ctx.submit_command(CLOSE_WINDOW)
+        });
+    let end_button = Either::new(
+        |data: &AppState, _env: &Env| {
+            if data.calculating >= 1.0 {
+                return true
+            }
+            false
+        }, 
+        close_button,
+        EmptyWidget,
+    ).align_horizontal(UnitPoint::CENTER)
+    .padding((0.0, 25.0, 0.0, 0.0));
+
     let calc_container = Flex::column()
         .with_flex_child(calc_label, 1.0)
         .with_flex_child(
@@ -64,7 +99,7 @@ pub fn open_loading(ctx: &mut EventCtx, data: &mut AppState, env: &Env) -> Windo
                 .align_horizontal(UnitPoint::CENTER)
                 .expand_width(),
             1.0
-        );
+        ).with_flex_child(end_button, 1.0);
 
     let root_widget = Either::new(|data: &AppState, _env: &Env| {
         if !data.error_msg.is_empty() { //show error msg if an error occurs
