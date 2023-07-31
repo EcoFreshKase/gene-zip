@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 druid = "0.8.3"
 druid-widget-nursery = "0.1.0"
+im = "15.1.0"
 
 [build-dependencies]
 winres = "0.1"

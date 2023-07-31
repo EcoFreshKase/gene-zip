@@ -15,6 +15,7 @@ use druid::{Widget, EventCtx, Env, Event, WidgetExt, TimerToken, Target};
 use druid::widget::{Button, Controller};
 use super::AppState::AppState;
 use super::error_correcting::ErrorCorrecting;
+use super::fasta_header_config::FastaHeader;
 use super::{AlgorithmType, Decode, Encode};
 use super::{open_error, loading_window::open_loading};
 use crate::{START_CONVERSION, GLOBAL_UPDATE};
@@ -81,7 +82,8 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                                 Path::new(&data_clone.save_path), 
                                 data_clone.encode_algorithm.unwrap(), //safe to call unwrap because it was checked earlier
                                 &data_clone.error_correcting,
-                                tx.clone()) {
+                                tx.clone(),
+                            &data_clone.header) {
                                     Ok(_) => tx.send(ConversionStatus::End(Ok(()))),
                                     Err(e) => tx.send(ConversionStatus::End(Err(e))),
                                 }
@@ -169,7 +171,7 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
 
 pub fn start_button_builder() -> impl Widget<AppState> {
     let button = Button::new("Convert")
-        .on_click(|ctx: &mut EventCtx, data: &mut AppState, env: &Env| {
+        .on_click(|ctx: &mut EventCtx, _data: &mut AppState, _env: &Env| {
             ctx.submit_command(START_CONVERSION.to(Target::Global));
         }).controller(ConversionHandler::new());
     button
@@ -185,7 +187,7 @@ pub fn start_button_builder() -> impl Widget<AppState> {
 ///     - an error occurred while encoding
 ///     - the name of the given file is invalid
 ///     - an error occurred while writing to a file
-fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode, error_correcting_algorithm: &ErrorCorrecting, tx: std::sync::mpsc::Sender<ConversionStatus>) -> Result<(), String> {
+fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode, error_correcting_algorithm: &ErrorCorrecting, tx: std::sync::mpsc::Sender<ConversionStatus>, header: &FastaHeader) -> Result<(), String> {
     if let Err(e) = check_paths(file_path, save_path) {
         return Err(e)
     }
@@ -246,7 +248,7 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         Ok(_) => (),
         Err(e) => return Err(e.to_string())
     }
-    let file = convert_to_fasta(&dna, &Some(&[&dna.len().to_string(), &file_name.to_string()]));
+    let file = convert_to_fasta(&dna, header);
     
     match tx.send(ConversionStatus::Res(0.0, "saving to a file ...".to_string())) {
         Ok(_) => (),
@@ -351,19 +353,12 @@ fn check_paths (file_path: &std::path::Path, save_path: &std::path::Path) -> Res
 /// gets a DNA-Sequence and converts it to the fasta format
 ///
 /// content: DNA-Sequence
-/// options: optional informationen for the header
-fn convert_to_fasta<T: Display>(content: &str, options: &Option<&[T]>) -> String {
-    //create header
-    let mut headline = ">".to_string();
-    if let Some(n) = options { //expand header if necessary
-        for option in *n {
-            headline += format!("{}|", option).as_str();
-        }
-    }
+/// header: The Fasta Header
+fn convert_to_fasta<T: Display>(content: &str, header: &T) -> String {
 
     //splits the sequence in lines, each containing 80 characters
     let elements_per_line = 80;
-    let mut output = headline + "\n";
+    let mut output = header.to_string() + "\n";
     for (index, char) in content.char_indices() {
         output.push(char);
         if (index + 1) % elements_per_line == 0 {

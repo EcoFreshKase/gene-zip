@@ -4,6 +4,7 @@ use std::fmt::Display;
 use druid::{Data, Lens};
 use super::error_correcting::ErrorCorrecting;
 use super::decode_encode::{AlgorithmType, Decode, Encode};
+use super::fasta_header_config::FastaHeader;
 
 /// current state of the application
 #[derive(Clone, Data, Lens, Debug)]
@@ -16,7 +17,9 @@ pub struct AppState {
     pub encode_algorithm: Option<Encode>, //storers the selected encode algorithm
     pub calculating: f64, // The progress of the conversion from 0 to 1.
     pub calculating_msg: String, // Message to display current state of conversion
-    pub error_msg: String //stores error messages
+    pub error_msg: String, //stores error messages
+    pub header: FastaHeader, //the Fasta Header
+    pub debugging: bool, // Debugging state.
 }
 
 impl Display for AppState {
@@ -30,7 +33,9 @@ impl Display for AppState {
             Encode_Algorithm: {:?}\n
             Calculating: {}\n
             Calculating_msg: {}\n
-            Error_msg: {}\n",
+            Error_msg: {}\n
+            Header: {}\n
+            Debugging: {}\n",
             self.file_path,
             self.save_path,
             self.error_correcting,
@@ -40,6 +45,8 @@ impl Display for AppState {
             self.calculating,
             self.calculating_msg,
             self.error_msg,
+            self.header,
+            self.debugging,
         )
     }
 }
