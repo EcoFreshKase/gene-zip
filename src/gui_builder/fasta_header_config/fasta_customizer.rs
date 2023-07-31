@@ -5,19 +5,23 @@ Contains code to represent a FastaHeader
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
+use druid::Data;
+use im::vector::Vector;
+
 // Represent a FastaHeader
+#[derive(Data, Clone, PartialEq, Debug)]
 pub struct FastaHeader {
-    header_options: Vec<FastaCustomizerOption>
+    header_options: Vector<FastaCustomizerOption>
 }
 
 impl FastaHeader {
-    fn new() -> FastaHeader {
-        FastaHeader { header_options: Vec::new() }
+    pub fn new() -> FastaHeader {
+        FastaHeader { header_options: Vector::new() }
     }
 
     /// Push a FastaCustomizerOption to the FastaHeader
     fn push_option(&mut self, opt: FastaCustomizerOption) {
-        self.header_options.push(opt)
+        self.header_options.push_back(opt)
     }
 }
 
@@ -37,7 +41,7 @@ impl Display for FastaHeader {
 ///    FileSize(u64), The original size of the file
 ///    SeqLen(String), The amount of Nucleotides in the sequence
 ///    CustomMsg(String), Custom messages created by the user
-#[derive(Clone)]
+#[derive(Data, Clone, PartialEq, Debug)]
 pub enum FastaCustomizerOption {
     FileName(String), // The name of the file
     FileExt(String), // The file extension
