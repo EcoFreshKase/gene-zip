@@ -8,6 +8,7 @@ mod convert_utils;
 mod gui_builder;
 
 use gui_builder::decode_encode;
+use im::Vector;
 
 const WINDOW_SIZE: (f64, f64) = (599.0 *1.3, 337.0 *1.3); //Size of the window (width, height)
 const ERROR: Selector = Selector::new("ERROR WHILE CONVERTING");
@@ -71,12 +72,14 @@ fn main() {
         calculating: 0.0,
         calculating_msg: String::new(),
         error_msg: String::new(),
+        custom_msg_header: String::new(),
 
         header_file_name: false,
         header_file_ext: false,
         header_file_size: false,
         header_used_algorithm: true,
         header_used_error_correcting: true,
+        header_custom_messages: Vector::new(),
 
         debugging: false,
     };

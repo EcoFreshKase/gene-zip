@@ -3,8 +3,9 @@ use std::fmt::Display;
 use std::path::Path;
 
 use druid::{Data, Lens};
+use im::Vector;
 use super::error_correcting::ErrorCorrecting;
-use super::decode_encode::{AlgorithmType, Decode, Encode, Algorithm};
+use super::decode_encode::{AlgorithmType, Decode, Encode};
 
 /// current state of the application
 #[derive(Clone, Data, Lens, Debug)]
@@ -18,6 +19,7 @@ pub struct AppState {
     pub calculating: f64, // The progress of the conversion from 0 to 1.
     pub calculating_msg: String, // Message to display current state of conversion
     pub error_msg: String, //stores error messages
+    pub custom_msg_header: String, //stores the current typed custom message for the FASTA header
 
     // Header Options
     pub header_file_name: bool, // Wether the name of the file should be shown.
@@ -25,6 +27,7 @@ pub struct AppState {
     pub header_file_size: bool, // ether the original size of the file should be shown.
     pub header_used_algorithm: bool, // Wether the used algorithm should be shown.
     pub header_used_error_correcting: bool, // Wether the used error correcting Code should be shown.
+    pub header_custom_messages: Vector<String>, // All custom messages by the user
 
     pub debugging: bool, // Debugging state.
 }
@@ -81,11 +84,19 @@ impl AppState {
         if self.header_used_error_correcting {
             options.push(self.error_correcting.to_string())
         }
+        for msg in &self.header_custom_messages {
+            options.push(msg.to_owned())
+        }
 
         let mut output = ">".to_string(); // Start of header line
         let _ = options.iter().map(|option| output.push_str(&format!("{}|", option))).collect::<()>(); // Append all selected options to the header
 
         Ok(output)
+    }
+
+    /// Adds a custom messages for the FASTA header created by the user
+    pub fn add_custom_msg<T: Display>(&mut self, msg: T) {
+        self.header_custom_messages.push_back(msg.to_string())
     }
 }
 
