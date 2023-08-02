@@ -72,7 +72,7 @@ fn main() {
         calculating: 0.0,
         calculating_msg: String::new(),
         error_msg: String::new(),
-        custom_msg_header: String::new(),
+        custom_msg_buf: String::new(),
 
         header_file_name: false,
         header_file_ext: false,

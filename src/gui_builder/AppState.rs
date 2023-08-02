@@ -19,7 +19,7 @@ pub struct AppState {
     pub calculating: f64, // The progress of the conversion from 0 to 1.
     pub calculating_msg: String, // Message to display current state of conversion
     pub error_msg: String, //stores error messages
-    pub custom_msg_header: String, //stores the current typed custom message for the FASTA header
+    pub custom_msg_buf: String, //stores the current typed custom message for the FASTA header
 
     // Header Options
     pub header_file_name: bool, // Wether the name of the file should be shown.
@@ -95,8 +95,11 @@ impl AppState {
     }
 
     /// Adds a custom messages for the FASTA header created by the user
-    pub fn add_custom_msg<T: Display>(&mut self, msg: T) {
-        self.header_custom_messages.push_back(msg.to_string())
+    ///
+    /// clears the custom messages buffer after adding the custom message
+    pub fn add_custom_msg(&mut self) {
+        self.header_custom_messages.push_back(self.custom_msg_buf.clone());
+        self.custom_msg_buf.clear()
     }
 }
 

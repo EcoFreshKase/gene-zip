@@ -61,13 +61,12 @@ fn fasta_customizer_builder() -> impl Widget<AppState> {
 fn custom_msg_builder() -> impl Widget<AppState> {
     let text_box = TextBox::new()
         .with_line_wrapping(true)
-        .lens(AppState::custom_msg_header);
-    let add_button = Button::new("Add message!")
+        .lens(AppState::custom_msg_buf);
+    let add_button = Button::new("Add message")
         .on_click(|_ctx, data: &mut AppState, _env| {
-            data.header_custom_messages.push_back(data.custom_msg_header.clone());
-            data.custom_msg_header.clear();
+            data.add_custom_msg()
         });
-    let remove_button = Button::new("Remove last Message")
+    let remove_button = Button::new("Remove last message")
         .on_click(|_ctx, data: &mut AppState, _env| {
             data.header_custom_messages.pop_back();
         });
