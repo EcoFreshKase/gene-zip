@@ -30,9 +30,15 @@ fn fasta_customizer_builder() -> impl Widget<AppState> {
         .lens(AppState::header_file_ext);
     let cb_file_size = Checkbox::new("file size")
         .lens(AppState::header_file_size);
+    let cb_selected_algorithm = Checkbox::new("selected algorithm")
+        .lens(AppState::header_used_algorithm);
+    let cb_selected_error_correcting = Checkbox::new("selected error correcting code")
+        .lens(AppState::header_used_error_correcting);
 
     Flex::column()
         .with_child(cb_file_name)
         .with_child(cb_file_ext)
         .with_child(cb_file_size)
+        .with_child(cb_selected_algorithm)
+        .with_child(cb_selected_error_correcting)
 }

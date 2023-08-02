@@ -75,6 +75,8 @@ fn main() {
         header_file_name: false,
         header_file_ext: false,
         header_file_size: false,
+        header_used_algorithm: true,
+        header_used_error_correcting: true,
 
         debugging: false,
     };

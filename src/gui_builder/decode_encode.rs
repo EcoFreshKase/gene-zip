@@ -3,12 +3,15 @@ contains a builder function for the selection wether to decode or encode the fil
 as well as the specific algorithm selection
 */
 
-use std::fmt::Display;
+use std::fmt::{Display, Debug};
 
 use druid::{Widget, Data, WidgetExt};
 use druid::widget::{RadioGroup, Flex, Label, LensWrap, Either, DisabledIf};
 
 use super::AppState::AppState;
+
+/// Types implementing this Trait represent an Algorithm
+pub trait Algorithm: Display + Debug {}
 
 /// represents an the kind of an algorithm
 #[allow(dead_code)]
@@ -46,7 +49,7 @@ impl Display for AlgorithmType {
 impl Display for Decode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Decode::EasyDecode => write!(f, "Easy Encode"),
+            Decode::EasyDecode => write!(f, "Easy Decode"),
         }
     }
 }
@@ -58,6 +61,9 @@ impl Display for Encode {
         }
     }
 }
+
+impl Algorithm for Decode {}
+impl Algorithm for Encode {}
 
 pub fn builder() -> impl Widget<AppState> {
     let radio_group = LensWrap::new(

@@ -4,17 +4,17 @@ use std::path::Path;
 
 use druid::{Data, Lens};
 use super::error_correcting::ErrorCorrecting;
-use super::decode_encode::{AlgorithmType, Decode, Encode};
+use super::decode_encode::{AlgorithmType, Decode, Encode, Algorithm};
 
 /// current state of the application
 #[derive(Clone, Data, Lens, Debug)]
 pub struct AppState {
     pub file_path: String, //path to the file that gets converted
     pub save_path: String, //path to the place where the converted file gets saved
-    pub error_correcting: ErrorCorrecting, //stores the selectes error_correcting algorithm
+    pub error_correcting: ErrorCorrecting, //stores the selected error_correcting algorithm
     pub algorithm_type: AlgorithmType,
-    pub decode_algorithm: Option<Decode>, //storers the selected decode algorithm
-    pub encode_algorithm: Option<Encode>, //storers the selected encode algorithm
+    pub decode_algorithm: Option<Decode>, //stores the selected decode algorithm
+    pub encode_algorithm: Option<Encode>, //stores the selected encode algorithm
     pub calculating: f64, // The progress of the conversion from 0 to 1.
     pub calculating_msg: String, // Message to display current state of conversion
     pub error_msg: String, //stores error messages
@@ -23,6 +23,8 @@ pub struct AppState {
     pub header_file_name: bool, // Wether the name of the file should be shown.
     pub header_file_ext: bool, // Wether the file extension should be shown.
     pub header_file_size: bool, // ether the original size of the file should be shown.
+    pub header_used_algorithm: bool, // Wether the used algorithm should be shown.
+    pub header_used_error_correcting: bool, // Wether the used error correcting Code should be shown.
 
     pub debugging: bool, // Debugging state.
 }
@@ -53,6 +55,31 @@ impl AppState {
                 Err(e) => return Err(format!("Error while calling metadata: {}", e).to_string())
             };
             options.push(size.to_string());
+        }
+        if self.header_used_algorithm {
+            let current_algorithm = match self.algorithm_type {
+                AlgorithmType::Decode => {
+                    match &self.decode_algorithm {
+                        Some(n) => {
+                            println!("{}", n.to_string());
+                            n.to_string()
+                        },
+                        None => "None".to_string(),
+                    }
+                },
+                AlgorithmType::Encode => {
+                    match &self.encode_algorithm {
+                        Some(n) => n.to_string(),
+                        None => "None".to_string(),
+                    }
+                },
+                AlgorithmType::None => "None".to_string(),
+            };
+
+            options.push(current_algorithm)
+        }
+        if self.header_used_error_correcting {
+            options.push(self.error_correcting.to_string())
         }
 
         let mut output = ">".to_string(); // Start of header line
