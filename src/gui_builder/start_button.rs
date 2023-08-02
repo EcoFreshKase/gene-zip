@@ -15,7 +15,6 @@ use druid::{Widget, EventCtx, Env, Event, WidgetExt, TimerToken, Target};
 use druid::widget::{Button, Controller};
 use super::AppState::AppState;
 use super::error_correcting::ErrorCorrecting;
-use super::fasta_header_config::FastaHeader;
 use super::{AlgorithmType, Decode, Encode};
 use super::{open_error, loading_window::open_loading};
 use crate::{START_CONVERSION, GLOBAL_UPDATE};
@@ -77,16 +76,24 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                 match data.algorithm_type {
                     AlgorithmType::Encode => {
                         thread::spawn(move || {
-                            match encode_file(
+                            let header = match &data_clone.get_header() { // get FASTA header
+                                Ok(n) => n.to_owned(),
+
+                                // End the execution if no header could be created,
+                                Err(e) => return tx.send(ConversionStatus::End(Err(e.to_owned()))) 
+                            };
+
+                            return match encode_file(
                                 Path::new(&data_clone.file_path),
                                 Path::new(&data_clone.save_path), 
                                 data_clone.encode_algorithm.unwrap(), //safe to call unwrap because it was checked earlier
                                 &data_clone.error_correcting,
                                 tx.clone(),
-                            &data_clone.header) {
-                                    Ok(_) => tx.send(ConversionStatus::End(Ok(()))),
-                                    Err(e) => tx.send(ConversionStatus::End(Err(e))),
-                                }
+                                header
+                            ) {
+                                Ok(_) => tx.send(ConversionStatus::End(Ok(()))),
+                                Err(e) => tx.send(ConversionStatus::End(Err(e))),
+                            };
                             });
                     },
                     AlgorithmType::Decode => {
@@ -187,7 +194,7 @@ pub fn start_button_builder() -> impl Widget<AppState> {
 ///     - an error occurred while encoding
 ///     - the name of the given file is invalid
 ///     - an error occurred while writing to a file
-fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode, error_correcting_algorithm: &ErrorCorrecting, tx: std::sync::mpsc::Sender<ConversionStatus>, header: &FastaHeader) -> Result<(), String> {
+fn encode_file<T: Display>(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode, error_correcting_algorithm: &ErrorCorrecting, tx: std::sync::mpsc::Sender<ConversionStatus>, header: T) -> Result<(), String> {
     if let Err(e) = check_paths(file_path, save_path) {
         return Err(e)
     }
@@ -244,11 +251,11 @@ fn encode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         },
         None => return Err("file invalid".to_string()),
     };
-    match tx.send(ConversionStatus::Res(0.0, "converting DNA sequenc to FASTA ...".to_string())) {
+    match tx.send(ConversionStatus::Res(0.0, "converting DNA sequence to FASTA ...".to_string())) {
         Ok(_) => (),
         Err(e) => return Err(e.to_string())
     }
-    let file = convert_to_fasta(&dna, header);
+    let file = convert_to_fasta(&dna, &header);
     
     match tx.send(ConversionStatus::Res(0.0, "saving to a file ...".to_string())) {
         Ok(_) => (),

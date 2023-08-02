@@ -7,7 +7,7 @@ use druid::{WindowDesc, AppLauncher, Selector, theme};
 mod convert_utils;
 mod gui_builder;
 
-use gui_builder::{decode_encode, fasta_header_config::FastaHeader};
+use gui_builder::decode_encode;
 
 const WINDOW_SIZE: (f64, f64) = (599.0 *1.3, 337.0 *1.3); //Size of the window (width, height)
 const ERROR: Selector = Selector::new("ERROR WHILE CONVERTING");
@@ -71,7 +71,11 @@ fn main() {
         calculating: 0.0,
         calculating_msg: String::new(),
         error_msg: String::new(),
-        header: FastaHeader::new(),
+
+        header_file_name: false,
+        header_file_ext: false,
+        header_file_size: false,
+
         debugging: false,
     };
 
