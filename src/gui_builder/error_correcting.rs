@@ -8,6 +8,7 @@ use druid_widget_nursery::DropdownSelect;
 
 use super::AppState::AppState;
 use super::{HAMMING, DEFAULT_OPTION};
+use super::decode_encode::Algorithm;
 
 /// represents a specific error correcting algorithm
 #[derive(Data, Clone, PartialEq, Debug)]
@@ -24,6 +25,8 @@ impl Display for ErrorCorrecting {
         }
     }
 }
+
+impl Algorithm for ErrorCorrecting {}
 
 pub fn error_correcting_builder() -> impl Widget<AppState> {
 

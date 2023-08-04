@@ -1,16 +1,13 @@
 /*
-contains a buidler function for the fasta-header configurator
+contains a builder function for the fasta-header configurator
 */
-use druid::{Widget, Data, Lens, WindowConfig, WidgetExt, UnitPoint};
+use druid::{Widget, WindowConfig, WidgetExt, UnitPoint};
 use druid::widget::{Flex, Label, Button};
 
 use super::config_sub_builder::sub_window_builder;
 use super::super::AppState::AppState;
 
-#[derive(Data, Lens, Clone)]
-struct TestData {
-    string: &'static str,
-}
+pub const FASTA_WINDOW_SIZE: (f64, f64) = (599.0 *1.0, 337.0 *1.0);
 
 pub fn config_builder() -> impl Widget<AppState> {
     let config_label = Label::new("fasta-header configuration:");
@@ -18,8 +15,12 @@ pub fn config_builder() -> impl Widget<AppState> {
         .on_click(|ctx, data: &mut AppState, env| {
             let config_window = sub_window_builder();
 
+            let window_setting = WindowConfig::default() //sub window settings
+            .resizable(false)
+            .window_size(FASTA_WINDOW_SIZE);
+
             ctx.new_sub_window(
-                WindowConfig::default(), //sub window settings
+                window_setting, 
                 config_window,
                 data.clone(), 
                 env.clone());

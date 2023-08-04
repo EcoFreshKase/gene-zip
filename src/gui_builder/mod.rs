@@ -1,8 +1,8 @@
 /*
 contains everything to create the GUI
 */
-use druid::{Widget, Color, Event};
-use druid::widget::{Flex, Controller};
+use druid::{Widget, Color, Event, WidgetExt};
+use druid::widget::{Flex, Controller, Checkbox};
 
 #[allow(non_snake_case)]
 pub mod AppState;
@@ -31,6 +31,9 @@ pub const HAMMING: &'static str = "Hamming Code";
 ///returns a widget containing the whole UI
 pub fn build_ui() -> impl Widget<AppState::AppState> {
 
+    let debugging_checkbox = Checkbox::new("Debugging")
+        .lens(AppState::AppState::debugging);
+
     Flex::column()
         .with_flex_child(file_path::file_path_builder(), 1.0)
         .with_flex_child(error_correcting::error_correcting_builder(), 1.0)
@@ -40,6 +43,7 @@ pub fn build_ui() -> impl Widget<AppState::AppState> {
             1.0,
         )
         .with_flex_child(start_button::start_button_builder(), 1.0)
+        .with_child(debugging_checkbox)
 }
 
 struct MainController;
