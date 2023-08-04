@@ -1,4 +1,5 @@
 /target
 /Output
+/.vscode
 
 Cargo.lock

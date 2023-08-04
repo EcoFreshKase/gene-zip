@@ -2,11 +2,12 @@
 contains a builder function for the root widget of the FASTA-Header-Configurator sub window
 */
 
-use druid::{Widget, Env, WidgetExt};
-use druid::widget::{Label, Flex, Either, Checkbox, TextBox, Button};
-
+use druid::{Widget, Env, WidgetExt, Lens, UnitPoint};
+use druid::widget::{Label, Flex, Either, Checkbox, TextBox, Button, LabelText, SizedBox, LineBreaking};
 
 use crate::gui_builder::AppState::AppState;
+
+use super::FASTA_WINDOW_SIZE;
 
 pub fn sub_window_builder() -> impl Widget<AppState> {
     let root_widget = fasta_customizer_builder();
@@ -24,16 +25,6 @@ pub fn sub_window_builder() -> impl Widget<AppState> {
 }
 
 fn fasta_customizer_builder() -> impl Widget<AppState> {
-    let cb_file_name = Checkbox::new("file name")
-        .lens(AppState::header_file_name);
-    let cb_file_ext = Checkbox::new("file extension")
-        .lens(AppState::header_file_ext);
-    let cb_file_size = Checkbox::new("file size")
-        .lens(AppState::header_file_size);
-    let cb_selected_algorithm = Checkbox::new("selected algorithm")
-        .lens(AppState::header_used_algorithm);
-    let cb_selected_error_correcting = Checkbox::new("selected error correcting code")
-        .lens(AppState::header_used_error_correcting);
 
     // Shows the current header
     let current_header = Label::dynamic(|data: &AppState, _env: &Env| {
@@ -43,8 +34,25 @@ fn fasta_customizer_builder() -> impl Widget<AppState> {
             Err(e) => e.as_str(),
         });
         text
-    });
+    }).with_line_break_mode(LineBreaking::WordWrap)
+    .padding((0.0, 20.0));
 
+    Flex::column()
+        .with_child(cb_container_builder())
+        .with_child(custom_msg_builder())
+        .with_child(current_header)
+        .fix_size(FASTA_WINDOW_SIZE.0, FASTA_WINDOW_SIZE.1)
+}
+
+/// Creates the checkboxes to control the Header
+fn cb_container_builder() -> impl Widget<AppState> {
+    let cb_file_name = cb_builder("file name", AppState::header_file_name);
+    let cb_file_ext = cb_builder("file extension", AppState::header_file_ext);
+    let cb_file_size = cb_builder("file size", AppState::header_file_size);
+    let cb_selected_algorithm = cb_builder("selected algorithm", AppState::header_used_algorithm);
+    let cb_selected_error_correcting = cb_builder("selected error correcting code", AppState::header_used_error_correcting);
+
+    let padding = (599.0 * 0.3, 20.0, 5.0, 20.0);
 
     Flex::column()
         .with_child(cb_file_name)
@@ -52,8 +60,16 @@ fn fasta_customizer_builder() -> impl Widget<AppState> {
         .with_child(cb_file_size)
         .with_child(cb_selected_algorithm)
         .with_child(cb_selected_error_correcting)
-        .with_child(custom_msg_builder())
-        .with_child(current_header)
+        .padding(padding)
+        .center()
+}
+
+/// Creates a Checkbox with the given Text and wraps the checkbox to the given Data
+fn cb_builder(text: impl Into<LabelText<bool>>, lens_data: impl Lens<AppState, bool>) -> impl Widget<AppState> {
+
+    Checkbox::new(text)
+        .align_left()
+        .lens(lens_data)
 }
 
 /// Returns a Widget containing a TextBox and Button to allow for custom messages created by the user to be used
@@ -71,8 +87,12 @@ fn custom_msg_builder() -> impl Widget<AppState> {
             data.header_custom_messages.pop_back();
         });
 
+    let padding = (0.0, 20.0);
+
     Flex::row()
         .with_child(text_box)
         .with_child(add_button)
         .with_child(remove_button)
+        .padding(padding)
+        .center()
 }
