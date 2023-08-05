@@ -1,24 +1,24 @@
 # **g-zip**
 
-g-zip aims to be an easy to use program to convert between binary information and dna-sequences.
+g-zip aims to be an easy to use program to convert between binary information and DNA sequences.
 
 ## **What is g-zip used for?**
-Every year humans produce unimaginably quantities of data. Most of that data is digital data.
+Every year humanity produces unimaginably quantities of data. Most of that data is digital data.
 For reference: in 2018 the humanity produced 64 zettabytes(10^21) of data and this number doubles every year. [source](https://rivery.io/blog/big-data-statistics-how-much-data-is-there-in-the-world/)
 
 To store all of this data researchers work on different methods to improve current storage technology or invent new ways to store data. One of this new ways to store data is DNA.
 
 DNA has a potentially storage density **100,000** times greater then that of traditional HDD's. [source](https://www.derstandard.de/story/2000077616743/bioinformatiker-dna-speicher-kann-man-nicht-hacken) (german article) To store binary data as DNA you have to convert binary to DNA. Here comes the use case of g-zip.
 
-With g-zip you can convert every file on your computer to a DNA-sequence in a FASTA-file, use different algorithms to do that, add error-correcting codes, customize the FASTA-header and convert FASTA-files back to a binary file.
+With g-zip you can convert every file on your computer to a DNA sequence in a FASTA-file, use different algorithms to do that, add error-correcting codes, customize the FASTA-header and convert FASTA-files back to a binary file.
 
 ## **Examples**
-Suppose you are a scientist working on a new method to store DNA containing binary information. For that you have to convert a file to DNA. But how do you convert a file to DNA? You could make a program that does the conversion for you yourself, but why should you waste your time making it from scratch when there is already is a program doing exactly that four you? You could use the gained time to polish your research even further before publishing.
+Suppose you are a scientist working on a new method to store DNA containing binary information. To do that you have to convert a file you want to store to a DNA sequence. But how do you convert a file to DNA? You could make a program that does the conversion for you yourself, but why should you waste your time making it from scratch when there is already is a program doing exactly that four you? You could use the gained time to polish your research even further before publishing.
 
 In this case you could use g-zip (or at least I hope it could be someday) to convert your file to DNA and synthesize it to test your storage method.
 
 ## **Installation**
-The installer for version 1.0.0 will published when the app reaches this state. For now you can fork the repository, compile the code yourself and add the path to the executable in the [Inno Setup file](https://github.com/EcoFreshKase/g-zip/blob/main/g-zip%20installer.iss). For that you need to replace the source path in line 34 with your path. After that you have to compile this script with Inno Setup and run the installer.
+The installer for version 1.0.0 will be published when the app reaches this state. For now you can fork the repository, compile the code yourself and add the path to the executable in the [Inno Setup file](https://github.com/EcoFreshKase/g-zip/blob/main/g-zip%20installer.iss). For that you need to replace the source path in line 34 with your path. After that you have to compile this script with Inno Setup and run the installer.
 
 ## **Features**
 ### **1. DNA⇔Binary Conversion**
@@ -37,8 +37,18 @@ Again, currently there is one error correcting code available. (There will hopef
 
     for further information on the 7,4 Hamming-Code see [here](https://en.wikipedia.org/wiki/Hamming(7,4))
 
-### **3. FASTA-Header customization** (not implemented)
-You can customize the header of the FASTA-file you want to save your DNA-sequence in. This allows you to store further information about the sequence you might need.
+### **3. FASTA-Header customization**
+You can customize the FASTA-Header. E.g. you can add the original file name, file extension or the encode algorithm to the FASTA file in case you need it at a later time.
+
+Current possibilities for customization:
+- encoded file name
+- encoded file extension
+- encoded file size
+- add and remove as many custom messages as you want
+- the encode algorithm used
+- the error correcting code
+
+I would recommend always using the last two options, in case you forget which one you used. (better safe than sorry!)
 
 ## **Usage**
 how do you use g-zip?
@@ -70,7 +80,7 @@ g-zip is still under development. I still have many things I want to add. Here i
 ## **Get in contact**
 If you have any suggestions for the UI, have any problems, need more possibilities for DNA⇔Binary Conversion or have something on your mind you want to share feel free to open an issue describing whatever is on your mind or send me a message on discord (eco_fresh_kaese)
 
-If use g-zip in a real world situation (e.g. a situation similar to the one described in Examples) please let me know I would be really happy to know if this small program could help someone.
+If you use g-zip in a real world situation (e.g. a situation similar to the one described in Examples) please let me know I would be really happy to know if this small program could help someone.
 
 ## **Contributing**
 Feel free to work on an issue and make a pull request. I would be really happy if more people would work on my little project (～￣▽￣)～
