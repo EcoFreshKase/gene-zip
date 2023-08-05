@@ -10,7 +10,7 @@ mod gui_builder;
 use gui_builder::decode_encode;
 use im::Vector;
 
-const WINDOW_SIZE: (f64, f64) = (599.0 *1.3, 337.0 *1.3); //Size of the window (width, height)
+const WINDOW_SIZE: (f64, f64) = (599.0 *1.3, 337.0 *0.9); //Size of the window (width, height)
 const ERROR: Selector = Selector::new("ERROR WHILE CONVERTING");
 const NEW_LOADING_WINDOW: Selector = Selector::new("CREATE A NEW LOADING WINDOW");
 const START_CONVERSION: Selector = Selector::new("START CONVERSION");

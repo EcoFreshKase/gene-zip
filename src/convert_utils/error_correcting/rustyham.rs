@@ -5,13 +5,14 @@ Github-repo: https://github.com/tckmn/rustyham
 
 use std::iter::repeat;
 
+#[allow(dead_code)]
 pub enum Hamming { Encode, Decode, EncodeBinary, DecodeBinary }
 
 pub fn hamming(action: Hamming, s: String) -> String {
     match action {
         Hamming::Encode | Hamming::EncodeBinary => {
             // get an iterator over the individual bits
-            let mut bytes;
+            let bytes;
             let bytes_str = match action {
                 Hamming::EncodeBinary => s + "1",  // the final 1 signifies EOS
                 _ => {

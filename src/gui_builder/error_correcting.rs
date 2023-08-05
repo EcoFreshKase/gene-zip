@@ -1,8 +1,8 @@
 /*
 contains a builder function for the selection of error correcting algorithms
 */
-use std::fmt::{Display};
-use druid::{Widget, WidgetExt, Data};
+use std::fmt::Display;
+use druid::{Widget, WidgetExt, Data, UnitPoint};
 use druid::widget::{Label, Flex};
 use druid_widget_nursery::DropdownSelect;
 
@@ -30,8 +30,7 @@ impl Algorithm for ErrorCorrecting {}
 
 pub fn error_correcting_builder() -> impl Widget<AppState> {
 
-    let error_correcting_label = Label::new("Error-Correcting:");
-
+    let error_correcting_label = Label::new("Error Correcting:");
     //(displayed text, ErrorCorrecting variant) , ...
     let error_correcting_options = vec![
         (DEFAULT_OPTION, ErrorCorrecting::None),
@@ -42,8 +41,7 @@ pub fn error_correcting_builder() -> impl Widget<AppState> {
         .lens(AppState::error_correcting); //dropdown menu for the selectionf of error correcting algorithms
 
     Flex::row()
-        .with_child(error_correcting_label)
+        .with_flex_child(error_correcting_label, 1.0)
         .with_flex_child(dropdown, 1.0)
-        .expand_width()
-        .align_left()
+        .align_vertical(UnitPoint::TOP_LEFT)
 }

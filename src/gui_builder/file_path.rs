@@ -3,8 +3,8 @@ contains a builder function for a widget that lets the user see the path of the 
 and the path to which the file gets saved
 */
 
-use druid::{Widget,Insets, UnitPoint, Env};
-use druid::widget::{Label, WidgetExt, TextBox, Padding, Flex, LineBreaking};
+use druid::{Widget, UnitPoint, Env};
+use druid::widget::{Label, WidgetExt, TextBox, Flex, LineBreaking};
 use druid::text::FontDescriptor;
 
 use crate::gui_builder::AppState::AppState;

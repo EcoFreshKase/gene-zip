@@ -244,13 +244,6 @@ fn encode_file<T: Display>(file_path: &std::path::Path, save_path: &std::path::P
     }
     println!("end conversion");
 
-    let file_name = match file_path.file_name() {
-        Some(n) => match n.to_str() {
-            Some(n) => n,
-            None => return Err("file name contains invalid characters".to_string())
-        },
-        None => return Err("file invalid".to_string()),
-    };
     match tx.send(ConversionStatus::Res(0.0, "converting DNA sequence to FASTA ...".to_string())) {
         Ok(_) => (),
         Err(e) => return Err(e.to_string())

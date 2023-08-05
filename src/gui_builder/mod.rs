@@ -49,7 +49,7 @@ pub fn build_ui() -> impl Widget<AppState::AppState> {
 struct MainController;
 
 impl<T, W: Widget<T>> Controller<T,W> for MainController {
-    fn event(&mut self, child: &mut W, ctx: &mut druid::EventCtx, event: &druid::Event, data: &mut T, env: &druid::Env) {
+    fn event(&mut self, _child: &mut W, ctx: &mut druid::EventCtx, event: &druid::Event, _data: &mut T, _env: &druid::Env) {
         match event {
             Event::Command(cmd) if cmd.is(GLOBAL_UPDATE) => ctx.request_update(),
             _ => (),
