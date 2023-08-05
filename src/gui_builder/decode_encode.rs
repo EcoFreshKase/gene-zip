@@ -104,31 +104,37 @@ pub fn builder() -> impl Widget<AppState> {
 }
 
 fn decode_builder() -> impl Widget<AppState> {
-    let decode_label = Label::new("Decoder:");
+    let decode_label = Label::new("Decoder:")
+        .center();
 
     let options = vec![
         ("easy decode", Some(Decode::EasyDecode)),
     ];
 
     let decode_dropdown = RadioGroup::column(options)
+        .padding(5.0)
         .lens(AppState::decode_algorithm);
 
     Flex::row()
         .with_child(decode_label)
         .with_child(decode_dropdown)
+        .padding(5.0)
 }
 
 fn encode_builder() -> impl Widget<AppState> {
-    let encode_label = Label::new("Encoder:");
+    let encode_label = Label::new("Encoder:")
+        .center();
 
     let options = vec![
         ("easy encode", Some(Encode::EasyEncode)),
     ];
 
-    let encode_dropdown = RadioGroup::column(options)
+    let encode_choose = RadioGroup::column(options)
+        .padding(5.0)
         .lens(AppState::encode_algorithm);
 
     Flex::row()
         .with_child(encode_label)
-        .with_child(encode_dropdown)
+        .with_child(encode_choose)
+        .padding(5.0)
 }
