@@ -85,4 +85,4 @@ If you use g-zip in a real world situation (e.g. a situation similar to the one 
 ## **Contributing**
 Feel free to work on an issue and make a pull request. I would be really happy if more people would work on my little project (～￣▽￣)～
 
-A good first contribution would be to add a new error-correcting code or a new algorithm to convert between DNA and binary
+A good first contribution would be to add a new error-correcting code or a new algorithm to convert between DNA and binary. The issue #23 describes how to add a new algorithm to g-zip.
