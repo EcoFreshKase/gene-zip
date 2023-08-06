@@ -26,14 +26,14 @@ pub enum AlgorithmType {
 #[allow(dead_code)]
 #[derive(Data, Clone, PartialEq, Debug)]
 pub enum Decode {
-    EasyDecode
+    EasyDecode,
 }
 
 /// represents a specific Encode Algorithm
 #[allow(dead_code)]
 #[derive(Data, Clone, PartialEq, Debug)]
 pub enum Encode {
-    EasyEncode
+    EasyEncode,
 }
 
 impl Display for AlgorithmType {

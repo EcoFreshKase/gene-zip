@@ -10,21 +10,21 @@ mod gui_builder;
 use gui_builder::decode_encode;
 use im::Vector;
 
-const WINDOW_SIZE: (f64, f64) = (599.0 *1.3, 337.0 *0.9); //Size of the window (width, height)
+const WINDOW_SIZE: (f64, f64) = (599.0 *1.3, 337.0 *1.2); //Size of the window (width, height)
 const NEW_LOADING_WINDOW: Selector = Selector::new("CREATE A NEW LOADING WINDOW");
 const START_CONVERSION: Selector = Selector::new("START CONVERSION");
 const GLOBAL_UPDATE: Selector = Selector::new("UPDATE GLOBAL");
 
 fn main() {
 
-    //let args: Vec<String> = env::args().collect();
-    let args: Vec<String> = vec![String::from("C:\\Users\\alexa\\Desktop\\Coding Projekte\\g-zip\\dummy_file.txt")];
+    let args: Vec<String> = env::args().collect();
+    //let args: Vec<String> = vec![String::from("C:\\Users\\alexa\\Desktop\\Coding Projekte\\g-zip\\dummy_file.txt")];
     //let args: Vec<String> = vec![String::from("C:\\Users\\alexa\\OneDrive\\Bilder\\Anime\\I've been killing slimes for 300 years\\91139172_p0_master1200.jpg")]; //big image
     //let args: Vec<String> = vec![String::from("D:\\Bilder\\Insta\\convert.7z")]; //very large file
     
     //let args: Vec<String> = vec![String::from("C:\\Users\\alexa\\Desktop\\Coding Projekte\\g-zip\\dummy_file.fasta")]; // FASTA file
-    let path = args.get(0).unwrap(); //for test
-    //let path = args.get(1).unwrap(); //for release
+    //let path = args.get(0).unwrap(); //for test
+    let path = args.get(1).unwrap(); //for release
 
     //default values for the start of the application
     let default_save_extension= ".fasta";
