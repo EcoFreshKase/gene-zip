@@ -6,7 +6,7 @@ use super::rustyham;
 /// implements a (7,4) hamming code for the given bytes
 /// 
 /// returns an error if the conversion from base 10 to binary is faulty
-pub fn hamming_encode(bytes: &Vec<u8>) -> Result<Vec<u8>, String> {
+pub fn hamming_encode(bytes: &[u8]) -> Result<Vec<u8>, String> {
 
     let string_bytes: String = bytes.iter().map(|byte| format!("{:08b}", byte)).collect(); //bytes as string
     let hamming_bits: String  = rustyham::hamming(rustyham::Hamming::EncodeBinary, string_bytes); //bytes in hamming code
@@ -15,14 +15,14 @@ pub fn hamming_encode(bytes: &Vec<u8>) -> Result<Vec<u8>, String> {
 
 /// decodes the given bytes that implement a (7,4) hamming code and corrects all possible errors
 /// 
-/// The hamming code can neither correctly detect errors or correct errors if more than 1 error occours every 8 bits (!!!)
-/// therefore the result is not guarenteed to be correct.
+/// The hamming code can neither correctly detect errors or correct errors if more than 1 error occurs every 8 bits (!!!)
+/// therefore the result is not guaranteed to be correct.
 /// 
 /// returns an error if the conversion from base 10 to binary is faulty
-pub fn hamming_decode(bytes: &Vec<u8>) -> Result<Vec<u8>, String> {
+pub fn hamming_decode(bytes: &[u8]) -> Result<Vec<u8>, String> {
 
     let string_bytes: String = bytes.iter().map(|byte| format!("{:08b}", byte)).collect(); //bytes as string
-    let decoded_bits: String  = rustyham::hamming(rustyham::Hamming::DecodeBinary, string_bytes); //Decode hamming
+    let decoded_bits: String = rustyham::hamming(rustyham::Hamming::DecodeBinary, string_bytes); //Decode hamming
     vec_from_string(decoded_bits)
 }
 
@@ -39,7 +39,7 @@ fn vec_from_string(string: String) -> Result<Vec<u8>, String> {
             let bit = match bit {
                 48 => 0, //ASCII 0
                 49 => 1, //ASCII 1
-                _ => return Err(format!("Error while creating binary vec from string: invalid ASCII character found: {} ", bit).to_string())
+                _ => return Err(format!("Error while creating binary vec from string: invalid ASCII character found: {} ", bit))
             };
             byte += bit * 2u8.pow(index as u32);
         }
@@ -55,13 +55,12 @@ mod test {
 
     //flips the n-th bit of a byte
     fn flip_n_bit(bit: &mut u8, n: usize) -> u8 {
-        let output: u8;
-        if (*bit >> n) & 1 == 1 { //checks if bit is 1
+        let output = if (*bit >> n) & 1 == 1 { //checks if bit is 1
             let rev_bit = !*bit;
-            output = !(rev_bit | (1 << n));
+            !(rev_bit | (1 << n))
         } else {
-            output = *bit | (1 << n);
-        }
+            *bit | (1 << n)
+        };
         *bit = output;
         output
     }

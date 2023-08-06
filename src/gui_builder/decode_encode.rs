@@ -91,10 +91,7 @@ pub fn builder() -> impl Widget<AppState> {
     let algorithm_choose_control: DisabledIf<AppState, Either<AppState>> = DisabledIf::new( //algorithm selection only possible if an algorithm type was selected
         algorithm_choose,
         |data: &AppState, _env| {
-            match data.algorithm_type {
-                AlgorithmType::None => true,
-                _ => false,
-            }
+            matches!(data.algorithm_type, AlgorithmType::None)
         }
     );
     Flex::column()

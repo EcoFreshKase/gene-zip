@@ -40,7 +40,7 @@ fn main() {
                     break;
                 }
             }
-            output.expect(&format!("Path is not valid: {}", path))
+            output.unwrap_or_else(|| panic!("Path is not valid: {}", path)) // Should never panic
         };
         path[..extension_index].to_owned() + default_save_extension
     };

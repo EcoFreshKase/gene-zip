@@ -26,7 +26,7 @@ pub const BORDER_COLOR: Color = Color::BLACK;
 pub const BORDER_WIDTH: f64 = 3.0;
 pub const DEFAULT_OPTION: &str = "no selection";
 //Error correcting algorithm representations
-pub const HAMMING: &'static str = "Hamming Code";
+pub const HAMMING: &str = "Hamming Code";
 
 ///returns a widget containing the whole UI
 pub fn build_ui() -> impl Widget<AppState::AppState> {

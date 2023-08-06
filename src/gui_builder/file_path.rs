@@ -17,7 +17,7 @@ pub fn file_path_builder() -> impl Widget<AppState> {
 
     let current_path_label = Label::new("Current Path:");
     let file_path_label = Label::new(|data: &AppState, _env: &Env| { //create file_path_label
-        format!("{}", data.file_path)
+        data.file_path.to_string()
     }).with_font(path_font.clone())
     .with_line_break_mode(LineBreaking::WordWrap)
     .align_left();

@@ -1,6 +1,4 @@
 /*
-Enthält eine builder Funktion für den Button, mit dem die Konvertierung gestartet wird
-
 contains a builder function for the button that starts the conversion
 */
 
@@ -47,13 +45,13 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
             Event::Command(cmd) if cmd.is(START_CONVERSION) => { //start of conversion
                 match data.algorithm_type { //error message if no algorithm is selected
                     AlgorithmType::Decode => {
-                        if let None = data.decode_algorithm {
+                        if data.decode_algorithm.is_none() {
                             open_error(ctx, data, env, "Choose an algorithm!");
                             return;
                         }
                     }
                     AlgorithmType::Encode => {
-                        if let None = data.encode_algorithm {
+                        if data.encode_algorithm.is_none() {
                             open_error(ctx, data, env, "Choose an algorithm!");
                             return;
                         }
@@ -125,11 +123,11 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
                     }
                 };
 
-                match get_last_update(&rx) {
+                match get_last_update(rx) {
                     Ok(n) => match n { //check which status the conversion currently has
                         ConversionStatus::Res(progress, msg) => {
                             data.calculating += progress;
-                            data.calculating_msg = msg.clone();
+                            data.calculating_msg = msg;
                             ctx.submit_command(GLOBAL_UPDATE);
 
                             // The conversion can't be done if a ConversionStatus::Res is received
@@ -177,11 +175,10 @@ impl<W: Widget<AppState>> Controller<AppState, W> for ConversionHandler {
 }
 
 pub fn start_button_builder() -> impl Widget<AppState> {
-    let button = Button::new("Convert")
+    Button::new("Convert")
         .on_click(|ctx: &mut EventCtx, _data: &mut AppState, _env: &Env| {
             ctx.submit_command(START_CONVERSION.to(Target::Global));
-        }).controller(ConversionHandler::new());
-    button
+        }).controller(ConversionHandler::new())
 }
 
 ///encodes a file at the given path with the given algorithm and saves it in the given path
@@ -195,13 +192,11 @@ pub fn start_button_builder() -> impl Widget<AppState> {
 ///     - the name of the given file is invalid
 ///     - an error occurred while writing to a file
 fn encode_file<T: Display>(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Encode, error_correcting_algorithm: &ErrorCorrecting, tx: std::sync::mpsc::Sender<ConversionStatus>, header: T) -> Result<(), String> {
-    if let Err(e) = check_paths(file_path, save_path) {
-        return Err(e)
-    }
+    check_paths(file_path, save_path)?;
 
     let bytes = match read(file_path) { //read bytes from file
         Ok(n) => n,
-        Err(e) => return Err(format!("error while reading from file; {}", e).to_string())
+        Err(e) => return Err(format!("error while reading from file; {}", e))
     };
 
     //implement error correcting
@@ -254,10 +249,9 @@ fn encode_file<T: Display>(file_path: &std::path::Path, save_path: &std::path::P
         Ok(_) => (),
         Err(e) => return Err(e.to_string())
     }
-    match std::fs::write(save_path, file) {
-        Err(_) => return Err("errror while writing to file".to_string()),
-        _ => (),
-    };
+    if std::fs::write(save_path, file).is_err() {
+        return Err("error while writing to file".to_string())
+    }
 
     Ok(())
 }
@@ -271,47 +265,44 @@ fn encode_file<T: Display>(file_path: &std::path::Path, save_path: &std::path::P
 ///     - error while reading file
 ///     - error while writing file
 fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorithm: Decode, error_correcting_algorithm: &ErrorCorrecting, tx: std::sync::mpsc::Sender<ConversionStatus>) -> Result<(), String> {
-    if let Err(e) = check_paths(file_path, save_path) {
-        return Err(e)
-    }
+    check_paths(file_path, save_path)?;
 
     //remove header and new lines
-    let sequenc = match fs::read_to_string(file_path) {
+    let sequence = match fs::read_to_string(file_path) {
         Ok(n) => {
-            let index = match n.find("\n") { //end of first line
+            let index = match n.find('\n') { //end of first line
                 Some(n) => n,
                 None => return Err("File fault: it does not follow the fasta format ".to_string()),
             };
-            n[index+1..].replace("\n", "")
+            n[index+1..].replace('\n', "")
         },
         Err(_) => return Err("error while reading file. Please try again.".to_string()), 
     };
 
     let chunk_size = { // Has to be a multiple of 4
-        let size = get_chunk_size(&sequenc.len());
-        println!("{} {} {}", sequenc.len(), size, size%4);
-        let size = size - size%4 + 4; // Remove the remainder to make the size a multiple of 4. Add 4 to prevent the size from becoming 0.
-        size
+        let size = get_chunk_size(&sequence.len());
+        println!("{} {} {}", sequence.len(), size, size%4);
+        size - size%4 + 4 // Remove the remainder to make the size a multiple of 4. Add 4 to prevent the size from becoming 0.
     };
     let mut binary: Vec<u8> = Vec::new();
-    let seq_iterator = sequenc.as_bytes() //iterator over chunks of the sequenc
+    let seq_iterator = sequence.as_bytes() //iterator over chunks of the sequence
         .chunks(chunk_size)
         .map(str::from_utf8)
         .collect::<Result<Vec<&str>, _>>()
         .unwrap();
     
-    if let Err(e) = tx.send(ConversionStatus::Res(chunk_size as f64/sequenc.len() as f64, "converting DNA to binary ...".to_string())) {
+    if let Err(e) = tx.send(ConversionStatus::Res(chunk_size as f64/sequence.len() as f64, "converting DNA to binary ...".to_string())) {
         return Err(e.to_string())
     };
-    for sequenc_chunk in seq_iterator {
+    for sequence_chunk in seq_iterator {
         let res = match algorithm {
-            Decode::EasyDecode => easy_decode(&sequenc_chunk),
+            Decode::EasyDecode => easy_decode(sequence_chunk),
         };
         match res { //contains the binary version of the sequence
             Ok(mut n) => binary.append(&mut n),
             Err(e) => return Err(e),
         }
-        match tx.send(ConversionStatus::Res(chunk_size as f64/sequenc.len() as f64, "converting DNA to binary ...".to_string())) {
+        match tx.send(ConversionStatus::Res(chunk_size as f64/sequence.len() as f64, "converting DNA to binary ...".to_string())) {
             Ok(_) => (),
             Err(e) => return Err(e.to_string())
         };
@@ -330,7 +321,7 @@ fn decode_file(file_path: &std::path::Path, save_path: &std::path::Path, algorit
         Ok(_) => (),
         Err(e) => return Err(e.to_string())
     };
-    if let Err(_) = std::fs::write(save_path, binary) {
+    if std::fs::write(save_path, binary).is_err() {
         return Err("error while writing to file".to_string())
     }
     Ok(())
@@ -362,13 +353,13 @@ fn convert_to_fasta<T: Display>(content: &str, header: &T) -> String {
     for (index, char) in content.char_indices() {
         output.push(char);
         if (index + 1) % elements_per_line == 0 {
-            output.push_str("\n");
+            output.push('\n');
         }
     }
     output
 }
 
-/// gets byte and implements the given error correcting algorithm for the bytes and retusn them
+/// gets byte and implements the given error correcting algorithm for the bytes and returns them
 /// 
 /// returns an error if the given error correction algorithm returns an error
 fn encode_error_correcting(byte: Vec<u8>, algorithm: &ErrorCorrecting) -> Result<Vec<u8>, String> {
@@ -378,7 +369,7 @@ fn encode_error_correcting(byte: Vec<u8>, algorithm: &ErrorCorrecting) -> Result
     };
     match output {
         Ok(n) => Ok(n),
-        Err(e) => Err(format!("error while implementing error correcting code: {}", e).to_string()),
+        Err(e) => Err(format!("error while implementing error correcting code: {}", e)),
     }
 }
 
@@ -389,7 +380,7 @@ fn decode_error_correcting(byte: Vec<u8>, algorithm: &ErrorCorrecting) -> Result
     };
     match output {
         Ok(n) => Ok(n),
-        Err(e) => Err(format!("error while reversing error correcting code: {}", e).to_string()),
+        Err(e) => Err(format!("error while reversing error correcting code: {}", e)),
     }
 }
 
@@ -398,7 +389,7 @@ fn get_chunk_size(size: &usize) -> usize {
     let mut out = size/20; //chunks size is 5% of total size
         
     // When the size is smaller than 100 units set the chunk_size to size.
-    if out <= 0 {
+    if out == 0 {
         out = *size;
     }
     out
@@ -412,7 +403,7 @@ fn get_last_update(rx: &mpsc::Receiver<ConversionStatus>) -> Result<ConversionSt
         match rx.try_recv() {
             Ok(n) => last_value = Some(n),
             Err(e) => {
-                if let None = last_value {
+                if last_value.is_none() {
                     return Err(e)
                 }
                 break
