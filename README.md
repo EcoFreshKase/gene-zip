@@ -51,21 +51,16 @@ Current possibilities for customization:
 I would recommend always using the last two options, in case you forget which one you used. (better safe than sorry!)
 
 ## **Usage**
-how do you use g-zip?
+If you follow along this tutorial you learn how to use g-zip. If there are any problems consider the possibilities described in the **Get in contact** section.
+
+In this tutorial you will convert you first file to DNA ,back to a binary file, learn how to use Error Correcting Codes and how to customize the FASTA Header.
+
+---
 1. right-click the file you want to convert
-2. select 'Start g-zip'
-    
-You should now see the following screen. (The paths on top will be different from file to file)
+2. select 'start g-zip'
 
-![g-zip after start](https://github.com/EcoFreshKase/g-zip/blob/main/README%20images/g-zip%20after%20start.png)
-
-On top there is "File-Path:". To the right of it you can see 2 paths. The top path of the two is the path of the file you will convert. Under that is the path the file be saved in. You can change it like you want.
-
-In the middle of the screen there is a drop-down menu to select an error-correcting code.
-
-Bellow the selection of error correcting codes is a button "config header" where you can, well, config the FASTA-header.
-
-You can choose the algorithm to decode/encode your file on the right side. Firstly choose wether you want to decode or encode your file. After that you can choose from all available algorithms. After that you press the convert button and wait until your file is converted.
+You should now see the following screen:
+![g-zip after start up](README_images/g-zip_after_start.png)
 
 
 ## **Roadmap**
