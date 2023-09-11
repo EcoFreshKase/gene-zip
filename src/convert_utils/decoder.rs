@@ -86,18 +86,34 @@ pub fn easy_decode(string: &str) -> Result<Vec<u8>, String> {
 
         for char in chars {
             match char {
-                Some(n) => match match_char(&mut byte, n) {
-                    Ok(_) => (),
-                    Err(e) => return Err(e),
-                },
+                Some(n) => match_char(&mut byte, n)?,
                 None => {
                     condition = false;
                     break;
                 }
             }
         }
+        if !condition { //Check for condition before pushing output
+            break
+        }
         output.push(byte.to_u8())
     }
 
     Ok(output)
+}
+
+#[cfg(test)]
+mod test {
+    use super::easy_decode;
+
+
+    #[test]
+    fn easy_decode_test() {
+        let sequence = "AAAAGGGGAAGATAAT";
+
+        let decoded_sequence = easy_decode(sequence);
+        let expected_result = vec![0, u8::MAX, 12, 65];
+
+        assert_eq!(decoded_sequence.unwrap(), expected_result);
+    }
 }

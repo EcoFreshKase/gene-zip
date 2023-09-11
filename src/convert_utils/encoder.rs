@@ -34,3 +34,26 @@ pub fn easy_encode(bytes: Vec<u8>) -> Result<String, String> {
 
     Ok(output)
 }
+
+#[cfg(test)]
+mod test {
+    use super::easy_encode;
+    #[test]
+    fn easy_encode_test() {
+        // #1: 00 00 00 00
+        // #2: 11 11 11 11
+        // #3: 00 00 11 00
+        // #4: 01 00 00 01
+        //
+        // expected result: 
+        //  A A A A 
+        //  G G G G 
+        //  A A G A 
+        //  T A A T 
+        let chars = vec![0, u8::MAX, 12, 65];
+        let string_encoded = easy_encode(chars);
+        let expected_result = "AAAAGGGGAAGATAAT";
+
+        assert_eq!(string_encoded.unwrap(), expected_result);
+    }
+}
