@@ -17,7 +17,12 @@ Suppose you are a scientist working on a new method to store DNA containing bina
 In this case, you could use g-zip (or at least I hope it could be someday) to convert your file to DNA and synthesize it to test your storage method.
 
 ## **Installation**
-The installer for version 1.0.0 will be published when the app reaches this state. For now you can fork the repository, compile the code yourself and add the path to the executable in the [Inno Setup file](https://github.com/EcoFreshKase/g-zip/blob/main/g-zip%20installer.iss). For that you need to replace the source path in line 34 with your path. After that you have to compile this script with Inno Setup and run the installer.
+Download the 1.0.0 g-zip installer executable. Execute the file. The installer takes you through each steep and should be easy to understand.
+If you have any problems with the installation use the options described in the "Get in contact" Section to get help.
+
+Maybe you don't trust some sketchy executable on the internet. I can understand this. In this case you need more technical knowledge. 
+
+First of all Fork the Repository. Check the source code for harmful code. Compile the rust code in release mode. (Make sure you have rustc 1.70.0 or a newer version installed as this is the version used to compile the code) Add the path to the executable in "g-zip installer.iss". Install [Inno Setup](https://jrsoftware.org/isdl.php) and create the installer. Use the installer to install g-zip.
 
 ## **Features**
 ### **1. DNA⇔Binary Conversion**
