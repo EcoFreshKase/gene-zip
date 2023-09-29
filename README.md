@@ -22,7 +22,7 @@ If you have any problems with the installation use the options described in the 
 
 Maybe you don't trust some sketchy executable on the internet. I can understand this. In this case you need more technical knowledge. 
 
-First of all Fork the Repository. Check the source code for harmful code. Compile the rust code in release mode. (Make sure you have rustc 1.70.0 or a newer version installed as this is the version used to compile the code) Add the path to the executable in "g-zip installer.iss". Install [Inno Setup](https://jrsoftware.org/isdl.php) and create the installer. Use the installer to install g-zip.
+First of all, fork the Repository. Check the source code for harmful code. Compile the rust code in release mode. (Make sure you have rustc 1.70.0 or a newer version installed as this is the version used to compile the code) Add the path to the executable in "g-zip installer.iss". Install [Inno Setup](https://jrsoftware.org/isdl.php) and create the installer. Use the installer to install g-zip.
 
 ## **Features**
 ### **1. DNA⇔Binary Conversion**
