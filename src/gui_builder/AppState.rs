@@ -47,15 +47,14 @@ impl AppState {
             options.push(file_name)
         }
         if self.header_file_ext {
-            match file_path.extension() {
-                Some(n) => options.push(n.to_str().unwrap().to_owned()),
-                None => (),
+            if let Some(n) = file_path.extension() {
+                options.push(n.to_str().unwrap().to_owned());
             }
         }
         if self.header_file_size {
             let size = match file_path.metadata() {
                 Ok(n) => n.len(),
-                Err(e) => return Err(format!("Error while calling metadata: {}", e).to_string())
+                Err(e) => return Err(format!("Error while calling metadata: {}", e))
             };
             options.push(size.to_string());
         }
@@ -64,7 +63,7 @@ impl AppState {
                 AlgorithmType::Decode => {
                     match &self.decode_algorithm {
                         Some(n) => {
-                            println!("{}", n.to_string());
+                            println!("{}", n);
                             n.to_string()
                         },
                         None => "None".to_string(),
@@ -89,7 +88,7 @@ impl AppState {
         }
 
         let mut output = ">".to_string(); // Start of header line
-        let _ = options.iter().map(|option| output.push_str(&format!("{}|", option))).collect::<()>(); // Append all selected options to the header
+        options.iter().for_each(|option| output.push_str(&format!("{}|", option))); // Append all selected options to the header
 
         Ok(output)
     }

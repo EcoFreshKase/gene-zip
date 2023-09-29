@@ -26,7 +26,7 @@ pub const BORDER_COLOR: Color = Color::BLACK;
 pub const BORDER_WIDTH: f64 = 3.0;
 pub const DEFAULT_OPTION: &str = "no selection";
 //Error correcting algorithm representations
-pub const HAMMING: &'static str = "Hamming Code";
+pub const HAMMING: &str = "Hamming Code";
 
 ///returns a widget containing the whole UI
 pub fn build_ui() -> impl Widget<AppState::AppState> {
@@ -43,13 +43,13 @@ pub fn build_ui() -> impl Widget<AppState::AppState> {
             1.0,
         )
         .with_flex_child(start_button::start_button_builder(), 1.0)
-        .with_child(debugging_checkbox)
+        //.with_child(debugging_checkbox)
 }
 
 struct MainController;
 
 impl<T, W: Widget<T>> Controller<T,W> for MainController {
-    fn event(&mut self, child: &mut W, ctx: &mut druid::EventCtx, event: &druid::Event, data: &mut T, env: &druid::Env) {
+    fn event(&mut self, _child: &mut W, ctx: &mut druid::EventCtx, event: &druid::Event, _data: &mut T, _env: &druid::Env) {
         match event {
             Event::Command(cmd) if cmd.is(GLOBAL_UPDATE) => ctx.request_update(),
             _ => (),

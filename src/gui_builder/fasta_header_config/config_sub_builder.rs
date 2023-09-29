@@ -2,8 +2,8 @@
 contains a builder function for the root widget of the FASTA-Header-Configurator sub window
 */
 
-use druid::{Widget, Env, WidgetExt, Lens, UnitPoint};
-use druid::widget::{Label, Flex, Either, Checkbox, TextBox, Button, LabelText, SizedBox, LineBreaking};
+use druid::{Widget, Env, WidgetExt, Lens};
+use druid::widget::{Label, Flex, Either, Checkbox, TextBox, Button, LabelText, LineBreaking};
 
 use crate::gui_builder::AppState::AppState;
 

@@ -5,13 +5,14 @@ Github-repo: https://github.com/tckmn/rustyham
 
 use std::iter::repeat;
 
+#[allow(dead_code)]
 pub enum Hamming { Encode, Decode, EncodeBinary, DecodeBinary }
 
 pub fn hamming(action: Hamming, s: String) -> String {
     match action {
         Hamming::Encode | Hamming::EncodeBinary => {
             // get an iterator over the individual bits
-            let mut bytes;
+            let bytes;
             let bytes_str = match action {
                 Hamming::EncodeBinary => s + "1",  // the final 1 signifies EOS
                 _ => {
@@ -27,7 +28,7 @@ pub fn hamming(action: Hamming, s: String) -> String {
 
             // compute block and message length
             let mlen = bytes_str.len() as u32;
-            let lenpow = (2..).find(|&r| 2u32.pow(r) - r - 1 >= mlen).unwrap();
+            let lenpow = (2..).find(|&r| 2u32.pow(r) - r > mlen).unwrap();
             let len = 2usize.pow(lenpow) - 1;
 
             // the thing we're storing the hamming code in
@@ -72,8 +73,8 @@ pub fn hamming(action: Hamming, s: String) -> String {
                 Hamming::DecodeBinary => {
                     // have to chop off everything from the final 1
                     let data_str = data.collect::<String>();
-                    let idx = (&data_str[..]).rfind('1').unwrap();
-                    (&data_str[..idx]).to_string()
+                    let idx = (data_str[..]).rfind('1').unwrap();
+                    (data_str[..idx]).to_string()
                 },
                 _ => {
                     // we have to chop off the 0 padding if it exists
@@ -94,11 +95,11 @@ pub fn hamming(action: Hamming, s: String) -> String {
     }
 }
 
-fn calc_parity(code: &Vec<bool>, i: u32) -> bool {
+fn calc_parity(code: &[bool], i: u32) -> bool {
     let bi = 2usize.pow(i) - 1;
     let (mut parity, mut ignore, mut counter) = (false, false, 0);
-    for j in bi..code.len() {
-        if !ignore && code[j] { parity = !parity }
+    for bit in code.iter().skip(bi) {
+        if !ignore && *bit { parity = !parity }
         counter += 1;
         if counter >= 2u32.pow(i) {
             ignore = !ignore;

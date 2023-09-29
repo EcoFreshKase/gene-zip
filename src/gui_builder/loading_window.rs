@@ -65,13 +65,13 @@ impl<W: Widget<AppState>> Controller<AppState,W> for LoadingController {
 
 pub fn open_loading(ctx: &mut EventCtx, data: &mut AppState, env: &Env) -> WindowId {
     let error_label = Label::new(|data: &AppState, _env: &Env| { //shows error messages
-        format!("{}", data.error_msg)
+        data.error_msg.to_string()
     })
         .with_line_break_mode(LineBreaking::WordWrap)
         .center();
 
     let calc_label = Label::new(|data: &AppState, _env: &Env| {
-        format!("{}", data.calculating_msg)
+        data.calculating_msg.to_string()
     })
         .with_line_break_mode(LineBreaking::WordWrap)
         .center();

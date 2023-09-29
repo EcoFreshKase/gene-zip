@@ -20,11 +20,11 @@ impl StringByte {
                 return Err("string contains invalid characters".to_string())
             }
         }
-        return Ok(StringByte { byte: content })
+        Ok(StringByte { byte: content })
     }
 
     fn new() -> StringByte {
-        return StringByte { byte: "".to_string() }
+        StringByte { byte: "".to_string() }
     }
 
     fn push(&mut self, ch: char) {
@@ -34,19 +34,18 @@ impl StringByte {
     //returns the represented byte as a u8
     fn to_u8(&self) -> u8 {
         let mut val = 0; //contains the value of self.byte as a decimal number
-        for (i, char) in self.byte.chars().into_iter().rev().enumerate() {
+        for (i, char) in self.byte.chars().rev().enumerate() {
             if char == '0' { //skip 0 bits
                 continue;
             }
             let base: u8 = 2;
             val += base.pow(i as u32);
         }
-        return val
+        val
     }
 }
 
-/// string stellt eine Gensequenz dar
-/// converts a DNA-Sequenc to binary:
+/// converts a DNA-Sequence to binary:
 ///    A -> 00
 ///    T -> 01
 ///    C -> 10
@@ -87,18 +86,34 @@ pub fn easy_decode(string: &str) -> Result<Vec<u8>, String> {
 
         for char in chars {
             match char {
-                Some(n) => match match_char(&mut byte, n) {
-                    Ok(_) => (),
-                    Err(e) => return Err(e),
-                },
+                Some(n) => match_char(&mut byte, n)?,
                 None => {
                     condition = false;
                     break;
                 }
             }
         }
+        if !condition { //Check for condition before pushing output
+            break
+        }
         output.push(byte.to_u8())
     }
 
-    return Ok(output)
+    Ok(output)
+}
+
+#[cfg(test)]
+mod test {
+    use super::easy_decode;
+
+
+    #[test]
+    fn easy_decode_test() {
+        let sequence = "AAAAGGGGAAGATAAT";
+
+        let decoded_sequence = easy_decode(sequence);
+        let expected_result = vec![0, u8::MAX, 12, 65];
+
+        assert_eq!(decoded_sequence.unwrap(), expected_result);
+    }
 }

@@ -2,11 +2,12 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "g-zip"
-#define MyAppVersion "0.0.1"
+#define MyAppVersion "1.0.0"
 #define MyAppExeName "g-zip.exe"
 #define MyAppAssocName MyAppName
 #define MyAppAssocExt ".fasta"
 #define MyAppAssocKey MyAppAssocName
+#define ExecutablePath ; Add Path to the executable (absolute or relative to this file)
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -22,7 +23,7 @@ InfoBeforeFile=infobefore.txt
 InfoAfterFile=infoafter.txt
 PrivilegesRequired=admin
 OutputBaseFilename=g-zip installer
-SetupIconFile=icon.ico
+; SetupIconFile=icon.ico ; Remove this comment to add an Icon to the Installer
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -31,7 +32,7 @@ WizardStyle=modern
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "C:\Users\alexa\Desktop\Coding Projekte\g-zip\g-zip\target\release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: {#ExecutablePath} ; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]  

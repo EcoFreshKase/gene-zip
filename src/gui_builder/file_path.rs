@@ -3,8 +3,8 @@ contains a builder function for a widget that lets the user see the path of the 
 and the path to which the file gets saved
 */
 
-use druid::{Widget,Insets, UnitPoint, Env};
-use druid::widget::{Label, WidgetExt, TextBox, Padding, Flex, LineBreaking};
+use druid::{Widget, UnitPoint, Env};
+use druid::widget::{Label, WidgetExt, TextBox, Flex, LineBreaking};
 use druid::text::FontDescriptor;
 
 use crate::gui_builder::AppState::AppState;
@@ -17,7 +17,7 @@ pub fn file_path_builder() -> impl Widget<AppState> {
 
     let current_path_label = Label::new("Current Path:");
     let file_path_label = Label::new(|data: &AppState, _env: &Env| { //create file_path_label
-        format!("{}", data.file_path)
+        data.file_path.to_string()
     }).with_font(path_font.clone())
     .with_line_break_mode(LineBreaking::WordWrap)
     .align_left();
