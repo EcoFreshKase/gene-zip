@@ -43,7 +43,7 @@ pub fn build_ui() -> impl Widget<AppState::AppState> {
             1.0,
         )
         .with_flex_child(start_button::start_button_builder(), 1.0)
-        //.with_child(debugging_checkbox)
+        .with_child(debugging_checkbox)
 }
 
 struct MainController;
