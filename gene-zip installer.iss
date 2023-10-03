@@ -7,7 +7,7 @@
 #define MyAppAssocName MyAppName
 #define MyAppAssocExt ".fasta"
 #define MyAppAssocKey MyAppAssocName
-#define ExecutablePath "C:\Users\alexa\Desktop\Coding Projekte\g-zip\gene-zip\target\release\gene-zip.exe" ; Add Path to the executable (absolute or relative to this file)
+#define ExecutablePath ; Add Path to the executable (absolute or relative to this file)
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.

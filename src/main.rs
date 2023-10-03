@@ -1,4 +1,4 @@
-//#![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 
 use std::env;
 use std::path::Path;
@@ -18,8 +18,7 @@ const GLOBAL_UPDATE: Selector = Selector::new("UPDATE GLOBAL");
 fn main() {
 
     let args: Vec<String> = env::args().collect();
-    //let path = args.get(1).unwrap(); //for release
-    let path = "some random file to test";
+    let path = args.get(1).unwrap(); //for release
 
     //default values for the start of the application
     let default_save_extension= ".fasta";

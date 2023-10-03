@@ -3,4 +3,4 @@ Thank you for using gene-zip.
 Right-click a file you want to convert to a DNA-sequence. Click "start gene-zip". Configure the conversion to your liking and click convert. Congratulation, you have now converted you first file to a DNA-sequence.
 To convert a DNA-sequence to a binary file. Follow the same steps.
 
-Check the github repository of gene-zip for further information on how to use gene-zip: https://github.com/EcoFreshKase/gene-zip
+Check the github repository of gene-zip for further information on how to use gene-zip: https://github.com/EcoFreshKase/gene-zip/tree/release-1.0.0
