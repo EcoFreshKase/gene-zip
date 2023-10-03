@@ -53,7 +53,7 @@ fn main() {
 
     //GUI creation
     let main_window = WindowDesc::new(gui_builder::build_ui())
-        .title("g-zip")
+        .title("gene-zip")
         .resizable(false)
         .window_size(WINDOW_SIZE);
     let initial_state = gui_builder::AppState::AppState {
