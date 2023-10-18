@@ -12,3 +12,11 @@ im = "15.1.0"
 
 [build-dependencies]
 winres = "0.1"
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+gene-zip = { version = "1.0.0", path = "../gene-zip"}
+
+[[bench]]
+name = "encoding"
+harness = false
