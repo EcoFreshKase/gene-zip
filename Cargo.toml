@@ -12,3 +12,10 @@ im = "15.1.0"
 
 [build-dependencies]
 winres = "0.1"
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+
+[[bench]]
+name = "encoding"
+harness = false
